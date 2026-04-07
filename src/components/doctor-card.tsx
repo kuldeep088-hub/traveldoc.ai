@@ -127,7 +127,7 @@ export function DoctorCard({ doctor, rank, aiReason }: DoctorCardProps) {
 
       {/* Quick contact buttons */}
       {(doctor.phone || doctor.website || doctor.address) && (
-        <div className="flex gap-2 mt-3">
+        <div className="flex flex-wrap gap-2 mt-3">
           {doctor.phone && (
             <a href={`tel:${doctor.phone}`}
               className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-2 rounded-lg hover:bg-green-100 transition-colors">

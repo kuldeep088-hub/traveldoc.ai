@@ -278,7 +278,7 @@ export default function RecommendPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Urgency</label>
                 <select value={urgency} onChange={(e) => setUrgency(e.target.value)}
@@ -375,11 +375,11 @@ export default function RecommendPage() {
 
           {/* Comparison bar */}
           {compareNames.size >= 2 && (
-            <div className="bg-white border border-brand-100 rounded-2xl p-4 mb-4 flex items-center justify-between gap-3">
+            <div className="bg-white border border-brand-100 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2">
                 <GitCompare className="w-4 h-4 text-brand-600" />
                 <span className="text-sm font-medium text-gray-700">
-                  {compareNames.size} doctors selected for comparison
+                  {compareNames.size} doctors selected
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -388,7 +388,7 @@ export default function RecommendPage() {
                   <XCircle className="w-3.5 h-3.5" /> Clear
                 </button>
                 <button onClick={handleCompare} disabled={compareLoading}
-                  className="flex items-center gap-1.5 bg-brand-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors">
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-brand-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors">
                   {compareLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <GitCompare className="w-3.5 h-3.5" />}
                   Compare with AI
                 </button>
@@ -443,14 +443,14 @@ export default function RecommendPage() {
               const isSelected = compareNames.has(ranked.name);
               return (
                 <div key={ranked.name} className={`bg-white rounded-2xl border p-5 shadow-sm transition-colors ${isSelected ? "border-brand-300 bg-brand-50/30" : "border-gray-100"}`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-full bg-brand-600 text-white text-sm font-bold flex items-center justify-center">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-7 h-7 rounded-full bg-brand-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
                         {ranked.rank}
                       </span>
-                      <span className="font-semibold text-gray-900">{ranked.name}</span>
+                      <span className="font-semibold text-gray-900 truncate">{ranked.name}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                         <span className="text-sm font-semibold text-gray-700">{ranked.score}/10</span>

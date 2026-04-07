@@ -208,7 +208,7 @@ export function VoiceAgent() {
         <button
           onClick={handleOpen}
           title="AI Voice Doctor Assistant"
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-brand-600 text-white shadow-xl hover:bg-brand-700 transition-all hover:scale-110 flex items-center justify-center"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-14 h-14 rounded-full bg-brand-600 text-white shadow-xl hover:bg-brand-700 transition-all hover:scale-110 flex items-center justify-center"
         >
           <Bot className="w-6 h-6" />
         </button>
@@ -216,7 +216,7 @@ export function VoiceAgent() {
 
       {/* Voice panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">

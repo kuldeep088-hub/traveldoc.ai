@@ -188,7 +188,7 @@ export default function HomePage() {
             <SearchForm />
           </div>
 
-          <div className="flex flex-wrap justify-center gap-8 mt-12">
+          <div className="flex flex-wrap justify-center gap-6 sm:gap-8 mt-8 sm:mt-12">
             {stats.map((s) => (
               <div key={s.label} className="text-center">
                 <div className="text-3xl font-bold text-white">{s.value}</div>

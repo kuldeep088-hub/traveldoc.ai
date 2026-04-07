@@ -138,7 +138,7 @@ export default async function DoctorPage({ params, searchParams }: DoctorPagePro
         <div className="space-y-3">
           {/* Phone */}
           {place.phone ? (
-            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-100 rounded-xl">
+            <div className="flex items-center justify-between flex-wrap gap-2 p-3 bg-green-50 border border-green-100 rounded-xl">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center">
                   <Phone className="w-4 h-4 text-green-600" />
@@ -148,7 +148,7 @@ export default async function DoctorPage({ params, searchParams }: DoctorPagePro
                   <p className="text-sm font-semibold text-gray-800">{place.phone}</p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-shrink-0">
                 <CopyPhone phone={place.phone} />
                 <a href={`tel:${place.phone}`}
                   className="flex items-center gap-1.5 bg-green-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors">

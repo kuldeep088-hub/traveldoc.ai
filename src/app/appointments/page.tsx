@@ -62,17 +62,17 @@ export default function AppointmentsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Appointments</h1>
           <p className="text-sm text-gray-500 mt-0.5">{appointments.length} total</p>
         </div>
         <Link
           href="/search"
-          className="flex items-center gap-2 text-sm font-medium text-brand-600 border border-brand-200 px-4 py-2 rounded-lg hover:bg-brand-50"
+          className="flex items-center gap-2 text-sm font-medium text-brand-600 border border-brand-200 px-3 py-2 rounded-lg hover:bg-brand-50 flex-shrink-0"
         >
           <Search className="w-4 h-4" />
-          Find a Doctor
+          <span className="hidden sm:inline">Find a Doctor</span>
         </Link>
       </div>
 
@@ -127,7 +127,7 @@ export default function AppointmentsPage() {
                 key={appt.id}
                 className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className="font-semibold text-gray-900">
                       {appt.doctor?.name ?? "Doctor"}

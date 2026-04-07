@@ -73,7 +73,7 @@ export default function SuggestPage() {
             placeholder="e.g. Dr. Smith Medical Center" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Specialty</label>
             <select name="specialty" value={form.specialty} onChange={handleChange}
@@ -99,7 +99,7 @@ export default function SuggestPage() {
             placeholder="Full address" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
             <input name="phone" value={form.phone} onChange={handleChange}
