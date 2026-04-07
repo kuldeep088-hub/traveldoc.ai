@@ -19,12 +19,8 @@ interface SearchAction {
   specialty: string;
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: new () => ISR;
-    webkitSpeechRecognition: new () => ISR;
-  }
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SpeechRecognitionCtor = new () => ISR;
 interface ISR extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -59,7 +55,8 @@ export default function ConversationPage() {
   const messagesRef = useRef<Message[]>([GREETING]);
 
   useEffect(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR: SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     setSpeechSupported(!!SR && !!window.speechSynthesis);
   }, []);
 
@@ -117,7 +114,8 @@ export default function ConversationPage() {
   }
 
   const startListening = useCallback(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR: SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
     setMicError("");
     window.speechSynthesis?.cancel();

@@ -10,12 +10,8 @@ interface Message {
   content: string;
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: new () => ISpeechRecognition;
-    webkitSpeechRecognition: new () => ISpeechRecognition;
-  }
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SpeechRecognitionCtor = new () => ISpeechRecognition;
 interface ISpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -50,7 +46,8 @@ export function VoiceAgent() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SpeechRec: SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       setSupported(!!SpeechRec && !!window.speechSynthesis);
     }
   }, []);
@@ -80,7 +77,8 @@ export function VoiceAgent() {
   }
 
   function startListening() {
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRec: SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRec) return;
 
     setError("");
