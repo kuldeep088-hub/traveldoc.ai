@@ -12,6 +12,7 @@ const navLinks = [
   { href: "/search", label: "Find a Doctor" },
   { href: "/recommend", label: "AI Recommendation" },
   { href: "/appointments", label: "My Appointments" },
+  { href: "/suggest", label: "Suggest a Doctor" },
 ];
 
 export function Navbar() {
@@ -68,10 +69,13 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-600 transition-colors"
+                >
                   <User className="w-4 h-4 text-gray-400" />
                   <span className="truncate max-w-[140px]">{user.email}</span>
-                </div>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-red-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:border-red-200 transition-colors"

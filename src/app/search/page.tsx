@@ -17,13 +17,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       </div>
 
       {params.city ? (
-        <Suspense
-          fallback={
-            <div className="text-center py-16 text-gray-400">
-              Searching for doctors in {params.city}...
-            </div>
-          }
-        >
+        <Suspense fallback={null}>
           <SearchResults
             city={params.city}
             specialty={params.specialty ?? ""}

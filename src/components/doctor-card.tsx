@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Star, MapPin, Phone, Globe, Languages } from "lucide-react";
+import { Star, MapPin, Phone, Globe, Languages, Share2, Check } from "lucide-react";
 import { Doctor } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -10,6 +11,15 @@ interface DoctorCardProps {
 }
 
 export function DoctorCard({ doctor, rank, aiReason }: DoctorCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  function handleShare() {
+    const url = `${window.location.origin}/doctor/${doctor.google_place_id}?name=${encodeURIComponent(doctor.name)}&address=${encodeURIComponent(doctor.address)}&phone=${encodeURIComponent(doctor.phone ?? "")}&website=${encodeURIComponent(doctor.website ?? "")}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
   const initials = doctor.name
     .split(" ")
     .slice(0, 2)
@@ -116,8 +126,15 @@ export function DoctorCard({ doctor, rank, aiReason }: DoctorCardProps) {
           href={`/appointments/new?doctor=${doctor.google_place_id}&name=${encodeURIComponent(doctor.name)}`}
           className="flex-1 text-center text-sm font-semibold text-white bg-brand-600 px-3 py-2 rounded-lg hover:bg-brand-700 transition-colors"
         >
-          Book Appointment
+          Book
         </Link>
+        <button
+          onClick={handleShare}
+          title="Copy link"
+          className="flex items-center justify-center w-9 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
+        >
+          {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Share2 className="w-3.5 h-3.5 text-gray-400" />}
+        </button>
       </div>
     </div>
   );
