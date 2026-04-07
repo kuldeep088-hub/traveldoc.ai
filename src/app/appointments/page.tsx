@@ -27,6 +27,20 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cancelling, setCancelling] = useState<string | null>(null);
+
+  async function handleCancel(id: string) {
+    setCancelling(id);
+    await fetch("/api/appointments", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status: "cancelled" }),
+    });
+    setAppointments((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, status: "cancelled" } : a))
+    );
+    setCancelling(null);
+  }
 
   useEffect(() => {
     fetch("/api/appointments")
@@ -139,12 +153,23 @@ export default function AppointmentsPage() {
                       </div>
                     )}
                   </div>
-                  <span
-                    className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full flex-shrink-0 ${status.className}`}
-                  >
-                    <StatusIcon className="w-3.5 h-3.5" />
-                    {status.label}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full flex-shrink-0 ${status.className}`}
+                    >
+                      <StatusIcon className="w-3.5 h-3.5" />
+                      {status.label}
+                    </span>
+                    {appt.status === "pending" && (
+                      <button
+                        onClick={() => handleCancel(appt.id)}
+                        disabled={cancelling === appt.id}
+                        className="text-xs text-red-500 hover:text-red-700 hover:underline disabled:opacity-50"
+                      >
+                        {cancelling === appt.id ? "Cancelling..." : "Cancel"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );

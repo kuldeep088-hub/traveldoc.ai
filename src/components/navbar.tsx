@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Stethoscope, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Stethoscope, Menu, X, LogOut, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navLinks = [
   { href: "/search", label: "Find a Doctor" },
@@ -14,7 +16,25 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
@@ -44,20 +64,38 @@ export function Navbar() {
             ))}
           </nav>
 
-          {/* CTA */}
+          {/* Auth — desktop */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/auth/login"
-              className="text-sm font-medium text-gray-600 hover:text-brand-600"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/auth/signup"
-              className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors"
-            >
-              Get started
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <span className="truncate max-w-[140px]">{user.email}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-red-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:border-red-200 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="text-sm font-medium text-gray-600 hover:text-brand-600"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors"
+                >
+                  Get started
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -90,20 +128,32 @@ export function Navbar() {
               </Link>
             ))}
             <div className="flex gap-2 mt-2">
-              <Link
-                href="/auth/login"
-                onClick={() => setOpen(false)}
-                className="flex-1 text-center text-sm font-medium border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/auth/signup"
-                onClick={() => setOpen(false)}
-                className="flex-1 text-center text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700"
-              >
-                Get started
-              </Link>
+              {user ? (
+                <button
+                  onClick={() => { handleLogout(); setOpen(false); }}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-sm font-medium border border-red-200 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Logout
+                </button>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setOpen(false)}
+                    className="flex-1 text-center text-sm font-medium border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    onClick={() => setOpen(false)}
+                    className="flex-1 text-center text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700"
+                  >
+                    Get started
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         </div>

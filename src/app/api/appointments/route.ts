@@ -22,6 +22,34 @@ export async function GET() {
   return NextResponse.json({ appointments: data });
 }
 
+export async function PATCH(req: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id, status } = await req.json();
+  if (!id || !status) {
+    return NextResponse.json({ error: "id and status are required" }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from("appointments")
+    .update({ status })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ appointment: data });
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
