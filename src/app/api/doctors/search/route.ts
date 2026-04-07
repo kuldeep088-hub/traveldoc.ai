@@ -50,29 +50,99 @@ async function geocodeCity(city: string): Promise<{ lat: number; lng: number } |
 }
 
 async function queryOverpass(lat: number, lng: number): Promise<OSMElement[]> {
-  const query = `[out:json][timeout:20];(node["amenity"~"^(doctors|clinic|hospital)$"](around:5000,${lat},${lng});way["amenity"~"^(doctors|clinic|hospital)$"](around:5000,${lat},${lng}););out center;`;
+  const query = `[out:json][timeout:25];(node["amenity"~"^(doctors|clinic|hospital|health_centre)$"](around:10000,${lat},${lng});way["amenity"~"^(doctors|clinic|hospital|health_centre)$"](around:10000,${lat},${lng});node["healthcare"](around:10000,${lat},${lng});way["healthcare"](around:10000,${lat},${lng}););out center;`;
   const body = new URLSearchParams({ data: query }).toString();
 
-  for (const endpoint of OVERPASS_ENDPOINTS) {
+  // Race ALL mirrors simultaneously — fastest valid response wins
+  const mirrorRace = OVERPASS_ENDPOINTS.map((endpoint) =>
+    fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+      cache: "no-store",
+      signal: AbortSignal.timeout(22000),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const elements: OSMElement[] = data.elements ?? [];
+        if (elements.length === 0) throw new Error("empty");
+        return elements;
+      })
+  );
+
+  try {
+    return await Promise.any(mirrorRace);
+  } catch {
+    console.log("[overpass] all mirrors failed");
+    return [];
+  }
+}
+
+// Fallback: Nominatim amenity search when Overpass is unavailable
+async function queryNominatim(city: string): Promise<OSMElement[]> {
+  const amenities = ["clinic", "hospital", "doctors"];
+  const results: OSMElement[] = [];
+
+  await Promise.allSettled(
+    amenities.map(async (amenity) => {
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?amenity=${amenity}&city=${encodeURIComponent(city)}&format=json&limit=10&addressdetails=1`;
+        const res = await fetch(url, {
+          headers: { "User-Agent": "TravelDocAI/1.0" },
+          cache: "no-store",
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        for (const item of data) {
+          results.push({
+            type: "node",
+            id: parseInt(item.osm_id ?? "0"),
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon),
+            tags: {
+              name: item.display_name?.split(",")[0] ?? "Medical Facility",
+              amenity,
+              "addr:full": item.display_name ?? "",
+            },
+          });
+        }
+      } catch { /* skip */ }
+    })
+  );
+
+  // Also try Photon as secondary fallback
+  if (results.length === 0) {
     try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body,
-        cache: "no-store",
-        signal: AbortSignal.timeout(22000), // 22s timeout per endpoint
-      });
-      if (!res.ok) continue; // try next mirror
-      const data = await res.json();
-      const elements = data.elements ?? [];
-      if (elements.length >= 0) return elements; // success
-    } catch {
-      // endpoint failed, try next
-      continue;
-    }
+      const url = `https://photon.komoot.io/api/?q=hospital+clinic+${encodeURIComponent(city)}&limit=20`;
+      const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10000) });
+      if (res.ok) {
+        const data = await res.json();
+        for (const f of data.features ?? []) {
+          if (!f.properties?.name) continue;
+          results.push({
+            type: "node",
+            id: 0,
+            lat: f.geometry.coordinates[1],
+            lon: f.geometry.coordinates[0],
+            tags: {
+              name: f.properties.name,
+              amenity: f.properties.type ?? "clinic",
+              "addr:full": [f.properties.street, f.properties.city].filter(Boolean).join(", "),
+              phone: f.properties.phone ?? "",
+              website: f.properties.website ?? "",
+            },
+          });
+        }
+      }
+    } catch { /* skip */ }
   }
 
-  return [];
+  console.log(`[nominatim-fallback] found ${results.length} places for ${city}`);
+  return results;
 }
 
 function elementToDoctor(el: OSMElement, city: string, specialty: string): Doctor {
@@ -136,10 +206,15 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const elements = await queryOverpass(coords.lat, coords.lng);
+  let elements = await queryOverpass(coords.lat, coords.lng);
+
+  // Fallback to Nominatim when all Overpass mirrors are unreachable
+  if (elements.length === 0) {
+    console.log("[search] Overpass returned 0 results, trying Nominatim fallback...");
+    elements = await queryNominatim(city);
+  }
 
   let doctors: Doctor[] = elements
-    .filter((el) => el.tags?.name)
     .map((el) => elementToDoctor(el, city, specialty));
 
   // Deduplicate by name + address
