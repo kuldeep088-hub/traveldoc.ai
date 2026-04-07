@@ -3,10 +3,20 @@ import { SearchForm } from "@/components/search-form";
 import {
   Brain, Calendar, MapPin, LocateFixed, GitCompare,
   Mic, PlusCircle, Map, MessageSquare, Search,
-  ArrowRight, CheckCircle, Stethoscope, Globe2,
+  ArrowRight, CheckCircle, Stethoscope, Globe2, Thermometer,
 } from "lucide-react";
 
 const features = [
+  {
+    icon: Thermometer,
+    title: "I Feel Sick Right Now",
+    description:
+      "Describe your symptoms. AI asks 2–3 questions, then tells you exactly what to do — rest at home, see a doctor today, or go to the ER.",
+    href: "/symptom-check",
+    cta: "Start symptom check",
+    color: "red",
+    badge: "Start here",
+  },
   {
     icon: Search,
     title: "Find a Doctor",
@@ -100,6 +110,7 @@ const features = [
 ];
 
 const colorMap: Record<string, { bg: string; icon: string; badge: string; border: string }> = {
+  red:    { bg: "bg-red-50",    icon: "text-red-600 bg-red-100",    badge: "bg-red-600 text-white",        border: "hover:border-red-300" },
   blue:   { bg: "bg-blue-50",   icon: "text-blue-600 bg-blue-100",   badge: "bg-blue-100 text-blue-600",   border: "hover:border-blue-200" },
   purple: { bg: "bg-purple-50", icon: "text-purple-600 bg-purple-100", badge: "bg-purple-100 text-purple-600", border: "hover:border-purple-200" },
   green:  { bg: "bg-green-50",  icon: "text-green-600 bg-green-100",  badge: "bg-green-100 text-green-600",  border: "hover:border-green-200" },
@@ -158,6 +169,19 @@ export default function HomePage() {
               AI-powered doctor search for travelers and new residents. Filter by
               language, specialty, and location — get a personalized match in seconds.
             </p>
+
+            {/* I Feel Sick CTA */}
+            <div className="mt-8 mb-2">
+              <Link
+                href="/symptom-check"
+                className="inline-flex items-center gap-3 bg-red-500 hover:bg-red-600 text-white font-bold px-7 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all text-base"
+              >
+                <Thermometer className="w-5 h-5" />
+                I feel sick right now
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <p className="text-blue-200 text-xs mt-2">Describe your symptoms — AI tells you what to do in 30 seconds</p>
+            </div>
           </div>
 
           <div className="max-w-3xl mx-auto">
@@ -283,22 +307,22 @@ export default function HomePage() {
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-3">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Quick access</p>
               {[
-                { label: "Find doctors near me", href: "/search", icon: MapPin },
-                { label: "AI doctor recommendation", href: "/recommend", icon: Brain },
-                { label: "Chat or speak with AI", href: "/conversation", icon: MessageSquare },
-                { label: "My appointments", href: "/appointments", icon: Calendar },
-                { label: "Suggest a missing doctor", href: "/suggest", icon: PlusCircle },
+                { label: "I feel sick right now", href: "/symptom-check", icon: Thermometer, red: true },
+                { label: "Find doctors near me", href: "/search", icon: MapPin, red: false },
+                { label: "AI doctor recommendation", href: "/recommend", icon: Brain, red: false },
+                { label: "Chat or speak with AI", href: "/conversation", icon: MessageSquare, red: false },
+                { label: "My appointments", href: "/appointments", icon: Calendar, red: false },
               ].map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-colors group"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors group ${item.red ? "border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300" : "border-gray-100 hover:border-brand-200 hover:bg-brand-50"}`}
                 >
-                  <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center group-hover:bg-brand-100 transition-colors">
-                    <item.icon className="w-4 h-4 text-brand-600" />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${item.red ? "bg-red-100 group-hover:bg-red-200" : "bg-brand-50 group-hover:bg-brand-100"}`}>
+                    <item.icon className={`w-4 h-4 ${item.red ? "text-red-600" : "text-brand-600"}`} />
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{item.label}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-gray-300 ml-auto group-hover:text-brand-400 transition-colors" />
+                  <span className={`text-sm font-medium ${item.red ? "text-red-700 font-semibold" : "text-gray-700"}`}>{item.label}</span>
+                  <ArrowRight className={`w-3.5 h-3.5 ml-auto transition-colors ${item.red ? "text-red-300 group-hover:text-red-500" : "text-gray-300 group-hover:text-brand-400"}`} />
                 </Link>
               ))}
             </div>
@@ -318,6 +342,13 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
+              href="/symptom-check"
+              className="inline-flex items-center justify-center gap-2 bg-red-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-red-600 transition-colors"
+            >
+              <Thermometer className="w-4 h-4" />
+              I Feel Sick Right Now
+            </Link>
+            <Link
               href="/search"
               className="inline-flex items-center justify-center gap-2 bg-white text-brand-700 font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors"
             >
@@ -329,7 +360,7 @@ export default function HomePage() {
               className="inline-flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold px-6 py-3 rounded-xl hover:bg-brand-800 transition-colors border border-blue-400"
             >
               <Brain className="w-4 h-4" />
-              Get AI Recommendation
+              AI Recommendation
             </Link>
           </div>
         </div>
