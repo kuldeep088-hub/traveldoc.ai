@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import { Doctor } from "@/lib/types";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// Local ranking used when Gemini is unavailable
+// Local ranking fallback when Groq is unavailable
 function localRank(doctors: Doctor[], symptoms: string, specialty: string) {
   const kw = (symptoms + " " + specialty).toLowerCase();
 
@@ -36,7 +36,7 @@ function localRank(doctors: Doctor[], symptoms: string, specialty: string) {
   const top = scored.slice(0, 5);
 
   return {
-    summary: `Based on your need (${symptoms}), we ranked the available facilities by data completeness and specialty match. Top result: ${top[0]?.doctor.name}.`,
+    summary: `Based on your need (${symptoms}), we ranked the available facilities by specialty match and contact availability. Top result: ${top[0]?.doctor.name}.`,
     best_match: top[0]?.doctor.name ?? "",
     ranked_doctors: top.map((item, i) => ({
       name: item.doctor.name,
@@ -51,14 +51,7 @@ function localRank(doctors: Doctor[], symptoms: string, specialty: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const {
-      doctors,
-      symptoms,
-      language,
-      urgency,
-      insurance,
-      city,
-    }: {
+    const { doctors, symptoms, language, urgency, insurance, city }: {
       doctors: Doctor[];
       symptoms: string;
       language: string;
@@ -72,9 +65,9 @@ export async function POST(req: NextRequest) {
     }
 
     const doctorList = doctors
-      .map(
-        (d, i) =>
-          `${i + 1}. ${d.name} | Specialty: ${d.specialty.join(", ")} | Address: ${d.address}${d.phone ? ` | Phone: ${d.phone}` : ""}${d.website ? ` | Website: ${d.website}` : ""}`
+      .slice(0, 10)
+      .map((d, i) =>
+        `${i + 1}. ${d.name} | Specialty: ${d.specialty.join(", ")} | Address: ${d.address}${d.phone ? ` | Phone: ${d.phone}` : ""}${d.website ? ` | Website: ${d.website}` : ""}`
       )
       .join("\n");
 
@@ -108,23 +101,22 @@ Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
 }`;
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3,
+        max_tokens: 1024,
+      });
+
+      const text = completion.choices[0]?.message?.content ?? "";
       const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
       const parsed = JSON.parse(cleaned);
       return NextResponse.json({ result: parsed });
-    } catch (geminiErr: unknown) {
-      // Gemini unavailable (quota / key issue) — fall back to local ranking
-      const errMsg = geminiErr instanceof Error ? geminiErr.message : "";
-      const isQuotaOrAuth = errMsg.includes("429") || errMsg.includes("quota") ||
-        errMsg.includes("404") || errMsg.includes("403");
-
-      if (isQuotaOrAuth) {
-        const fallback = localRank(doctors.slice(0, 10), symptoms, doctors[0]?.specialty[0] ?? "");
-        return NextResponse.json({ result: fallback, fallback: true });
-      }
-      throw geminiErr;
+    } catch (groqErr: unknown) {
+      console.error("Groq error:", groqErr);
+      // Fall back to local ranking
+      const fallback = localRank(doctors.slice(0, 10), symptoms, doctors[0]?.specialty[0] ?? "");
+      return NextResponse.json({ result: fallback, fallback: true });
     }
   } catch (err) {
     console.error("Recommend API error:", err);
