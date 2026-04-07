@@ -17,19 +17,34 @@ const OVERPASS_ENDPOINTS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 
+// Race multiple geocoders simultaneously — fastest valid response wins
 async function geocodeCity(city: string): Promise<{ lat: number; lng: number } | null> {
+  type Coords = { lat: number; lng: number };
+
+  const nominatim = fetch(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
+    { headers: { "User-Agent": "TravelDocAI/1.0" }, cache: "no-store", signal: AbortSignal.timeout(15000) }
+  ).then(async (r) => {
+    const d = await r.json();
+    if (!d.length) throw new Error("no result");
+    return { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) } as Coords;
+  });
+
+  const photon = fetch(
+    `https://photon.komoot.io/api/?q=${encodeURIComponent(city)}&limit=1`,
+    { cache: "no-store", signal: AbortSignal.timeout(15000) }
+  ).then(async (r) => {
+    const d = await r.json();
+    const c = d.features?.[0]?.geometry?.coordinates;
+    if (!c) throw new Error("no result");
+    return { lat: c[1], lng: c[0] } as Coords; // Photon returns [lon, lat]
+  });
+
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "TravelDocAI/1.0 (traveldoc.ai)" },
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.length) return null;
-    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-  } catch (e) {
-    console.error("[geocode] error:", e);
+    // First geocoder to succeed wins
+    return await Promise.any([nominatim, photon]);
+  } catch {
+    console.error("[geocode] all geocoders failed for:", city);
     return null;
   }
 }
