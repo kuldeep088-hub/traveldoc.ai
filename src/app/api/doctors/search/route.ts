@@ -1,43 +1,84 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Doctor } from "@/lib/types";
 
-const PLACES_NEW_API = "https://places.googleapis.com/v1/places:searchText";
-
-interface NewPlaceResult {
-  id: string;
-  displayName?: { text: string };
-  formattedAddress?: string;
-  rating?: number;
-  userRatingCount?: number;
-  location?: { latitude: number; longitude: number };
-  photos?: { name: string }[];
-  nationalPhoneNumber?: string;
-  websiteUri?: string;
-  regularOpeningHours?: { openNow?: boolean };
+interface OSMElement {
+  type: "node" | "way" | "relation";
+  id: number;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
 }
 
-function buildPhotoUrl(photoName: string, apiKey: string): string {
-  return `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${apiKey}`;
+async function geocodeCity(city: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "TravelDocAI/1.0 (traveldoc.ai)" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.length) return null;
+    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  } catch {
+    return null;
+  }
 }
 
-function mapPlaceToDoctor(place: NewPlaceResult, city: string, specialty: string): Doctor {
+async function queryOverpass(lat: number, lng: number): Promise<OSMElement[]> {
+  const query = `[out:json][timeout:25];(node["amenity"~"^(doctors|clinic|hospital)$"](around:5000,${lat},${lng});way["amenity"~"^(doctors|clinic|hospital)$"](around:5000,${lat},${lng}););out center;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `data=${encodeURIComponent(query)}`,
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.elements ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function elementToDoctor(el: OSMElement, city: string, specialty: string): Doctor {
+  const tags = el.tags ?? {};
+  const lat = el.lat ?? el.center?.lat ?? null;
+  const lng = el.lon ?? el.center?.lon ?? null;
+
+  const houseNo = tags["addr:housenumber"] ?? "";
+  const street = tags["addr:street"] ?? "";
+  const addrCity = tags["addr:city"] ?? city;
+  const address =
+    tags["addr:full"] ||
+    [houseNo, street].filter(Boolean).join(" ") + (street ? `, ${addrCity}` : addrCity);
+
+  const osmSpecialty = tags["healthcare:speciality"] || null;
+  const specialties = specialty
+    ? [specialty]
+    : osmSpecialty
+    ? [osmSpecialty]
+    : tags.amenity === "hospital"
+    ? ["Hospital"]
+    : ["General Practitioner"];
+
+  const osmId = `${el.type[0]}${el.id}`; // e.g. "n123456" or "w789012"
+
   return {
-    id: place.id,
-    google_place_id: place.id,
-    name: place.displayName?.text ?? "Unknown",
-    specialty: specialty ? [specialty] : ["General Practitioner"],
-    address: place.formattedAddress ?? "",
+    id: osmId,
+    google_place_id: osmId,
+    name: tags.name || tags["name:en"] || "Medical Facility",
+    specialty: specialties,
+    address,
     city,
-    phone: place.nationalPhoneNumber ?? null,
-    website: place.websiteUri ?? null,
-    rating: place.rating ?? null,
-    reviews_count: place.userRatingCount ?? null,
+    phone: tags.phone || tags["contact:phone"] || null,
+    website: tags.website || tags["contact:website"] || null,
+    rating: null,
+    reviews_count: null,
     languages: [],
-    photo_url: place.photos?.[0]
-      ? buildPhotoUrl(place.photos[0].name, process.env.GOOGLE_PLACES_API_KEY!)
-      : null,
-    lat: place.location?.latitude ?? null,
-    lng: place.location?.longitude ?? null,
+    photo_url: null,
+    lat: lat ?? null,
+    lng: lng ?? null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -53,63 +94,29 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "city is required" }, { status: 400 });
   }
 
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "Google Places API key not configured" },
-      { status: 500 }
-    );
+  const coords = await geocodeCity(city);
+  if (!coords) {
+    return NextResponse.json({ doctors: [], total: 0 });
   }
 
-  const query = specialty
-    ? `${specialty} doctor in ${city}`
-    : `doctor clinic in ${city}`;
+  const elements = await queryOverpass(coords.lat, coords.lng);
 
-  const fieldMask = [
-    "places.id",
-    "places.displayName",
-    "places.formattedAddress",
-    "places.rating",
-    "places.userRatingCount",
-    "places.photos",
-    "places.location",
-    "places.nationalPhoneNumber",
-    "places.websiteUri",
-    "places.regularOpeningHours",
-  ].join(",");
+  let doctors: Doctor[] = elements
+    .filter((el) => el.tags?.name)
+    .map((el) => elementToDoctor(el, city, specialty));
 
-  try {
-    const response = await fetch(PLACES_NEW_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": fieldMask,
-      },
-      body: JSON.stringify({ textQuery: query }),
-    });
+  // Deduplicate by name + address
+  const seen = new Set<string>();
+  doctors = doctors.filter((d) => {
+    const key = `${d.name}|${d.address}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Places API error:", data);
-      return NextResponse.json(
-        { error: "Failed to fetch doctors", details: data.error?.message },
-        { status: 502 }
-      );
-    }
-
-    let doctors: Doctor[] = (data.places ?? []).map((place: NewPlaceResult) =>
-      mapPlaceToDoctor(place, city, specialty)
-    );
-
-    if (language) {
-      doctors = doctors.map((d) => ({ ...d, languages: [language] }));
-    }
-
-    return NextResponse.json({ doctors, total: doctors.length });
-  } catch (err) {
-    console.error("Places API fetch error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  if (language) {
+    doctors = doctors.map((d) => ({ ...d, languages: [language] }));
   }
+
+  return NextResponse.json({ doctors: doctors.slice(0, 20), total: doctors.length });
 }

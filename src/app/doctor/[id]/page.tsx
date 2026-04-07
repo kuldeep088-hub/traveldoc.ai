@@ -8,78 +8,56 @@ import {
   Calendar,
   ArrowLeft,
   ExternalLink,
+  Clock,
 } from "lucide-react";
 
 interface PlaceDetail {
   id: string;
-  displayName?: { text: string };
-  formattedAddress?: string;
-  nationalPhoneNumber?: string;
-  websiteUri?: string;
-  rating?: number;
-  userRatingCount?: number;
-  photos?: { name: string }[];
-  reviews?: {
-    authorAttribution?: { displayName: string };
-    rating: number;
-    text?: { text: string };
-    relativePublishTimeDescription?: string;
-  }[];
-  regularOpeningHours?: {
-    openNow?: boolean;
-    weekdayDescriptions?: string[];
-  };
+  name: string;
+  address: string;
+  phone: string | null;
+  website: string | null;
+  openingHours: string | null;
 }
 
-async function fetchPlaceDetail(placeId: string): Promise<PlaceDetail | null> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) return null;
+async function fetchOSMDetail(osmId: string): Promise<PlaceDetail | null> {
+  // osmId format: "n123456" (node) or "w789012" (way)
+  const type = osmId.startsWith("w") ? "way" : "node";
+  const id = osmId.slice(1);
 
-  const fieldMask = [
-    "id",
-    "displayName",
-    "formattedAddress",
-    "nationalPhoneNumber",
-    "websiteUri",
-    "rating",
-    "userRatingCount",
-    "photos",
-    "reviews",
-    "regularOpeningHours",
-  ].join(",");
+  const query = `[out:json];${type}(${id});out;`;
 
-  const url = `https://places.googleapis.com/v1/places/${placeId}`;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const res = await fetch(url, {
-    headers: {
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": fieldMask,
-    },
-  } as any);
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `data=${encodeURIComponent(query)}`,
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const el = data.elements?.[0];
+    if (!el) return null;
 
-  if (!res.ok) return null;
-  return res.json();
-}
+    const tags = el.tags ?? {};
+    const houseNo = tags["addr:housenumber"] ?? "";
+    const street = tags["addr:street"] ?? "";
+    const addrCity = tags["addr:city"] ?? "";
+    const address =
+      tags["addr:full"] ||
+      [houseNo, street].filter(Boolean).join(" ") +
+        (street && addrCity ? `, ${addrCity}` : addrCity);
 
-function photoUrl(photoName: string) {
-  return `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=800&key=${process.env.GOOGLE_PLACES_API_KEY}`;
-}
-
-function StarRow({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Star
-          key={i}
-          className={`w-4 h-4 ${
-            i <= Math.round(rating)
-              ? "text-yellow-400 fill-yellow-400"
-              : "text-gray-200 fill-gray-200"
-          }`}
-        />
-      ))}
-    </div>
-  );
+    return {
+      id: osmId,
+      name: tags.name || tags["name:en"] || "Medical Facility",
+      address,
+      phone: tags.phone || tags["contact:phone"] || null,
+      website: tags.website || tags["contact:website"] || null,
+      openingHours: tags.opening_hours || null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 interface DoctorPageProps {
@@ -88,21 +66,16 @@ interface DoctorPageProps {
 
 export default async function DoctorPage({ params }: DoctorPageProps) {
   const { id } = await params;
-  const safePlace = await fetchPlaceDetail(id);
+  const place = await fetchOSMDetail(id);
 
-  if (!safePlace) notFound();
+  if (!place) notFound();
 
-  const name = safePlace.displayName?.text ?? "Doctor";
-  const initials = name
+  const initials = place.name
     .split(" ")
     .slice(0, 2)
     .map((w: string) => w[0])
     .join("")
     .toUpperCase();
-
-  const coverPhoto = safePlace.photos?.[0]
-    ? photoUrl(safePlace.photos[0].name)
-    : null;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
@@ -117,77 +90,51 @@ export default async function DoctorPage({ params }: DoctorPageProps) {
 
       {/* Hero card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-        {coverPhoto && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={coverPhoto} alt={name} className="w-full h-48 object-cover" />
-        )}
         <div className="p-6">
           <div className="flex items-start gap-4">
-            {!coverPhoto && (
-              <div className="w-16 h-16 rounded-xl bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xl flex-shrink-0">
-                {initials}
-              </div>
-            )}
+            <div className="w-16 h-16 rounded-xl bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xl flex-shrink-0">
+              {initials}
+            </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">{name}</h1>
-              {safePlace.rating && (
-                <div className="flex items-center gap-2 mt-1">
-                  <StarRow rating={safePlace.rating} />
-                  <span className="font-semibold text-gray-800">
-                    {safePlace.rating.toFixed(1)}
-                  </span>
-                  {safePlace.userRatingCount && (
-                    <span className="text-sm text-gray-400">
-                      ({safePlace.userRatingCount.toLocaleString()} reviews)
-                    </span>
-                  )}
-                </div>
-              )}
-              {safePlace.regularOpeningHours?.openNow !== undefined && (
-                <span
-                  className={`inline-block mt-2 text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    safePlace.regularOpeningHours.openNow
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
-                  {safePlace.regularOpeningHours.openNow ? "Open now" : "Closed"}
-                </span>
-              )}
+              <h1 className="text-2xl font-bold text-gray-900">{place.name}</h1>
+              <p className="text-sm text-gray-400 mt-1">Medical Facility</p>
             </div>
           </div>
 
           {/* Contact details */}
           <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {safePlace.formattedAddress && (
+            {place.address && (
               <div className="flex items-start gap-2 text-sm text-gray-600">
                 <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                {safePlace.formattedAddress}
+                {place.address}
               </div>
             )}
-            {safePlace.nationalPhoneNumber && (
+            {place.phone && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <a
-                  href={`tel:${safePlace.nationalPhoneNumber}`}
-                  className="hover:text-brand-600"
-                >
-                  {safePlace.nationalPhoneNumber}
+                <a href={`tel:${place.phone}`} className="hover:text-brand-600">
+                  {place.phone}
                 </a>
               </div>
             )}
-            {safePlace.websiteUri && (
+            {place.website && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <a
-                  href={safePlace.websiteUri}
+                  href={place.website}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-brand-600 flex items-center gap-1 truncate"
                 >
-                  {new URL(safePlace.websiteUri).hostname}
+                  {new URL(place.website).hostname}
                   <ExternalLink className="w-3 h-3" />
                 </a>
+              </div>
+            )}
+            {place.openingHours && (
+              <div className="flex items-start gap-2 text-sm text-gray-600">
+                <Clock className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                {place.openingHours}
               </div>
             )}
           </div>
@@ -195,15 +142,15 @@ export default async function DoctorPage({ params }: DoctorPageProps) {
           {/* CTA */}
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <Link
-              href={`/appointments/new?doctor=${id}&name=${encodeURIComponent(name)}`}
+              href={`/appointments/new?doctor=${id}&name=${encodeURIComponent(place.name)}`}
               className="flex-1 flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold py-3 rounded-xl hover:bg-brand-700 transition-colors"
             >
               <Calendar className="w-4 h-4" />
               Book Appointment
             </Link>
-            {safePlace.nationalPhoneNumber && (
+            {place.phone && (
               <a
-                href={`tel:${safePlace.nationalPhoneNumber}`}
+                href={`tel:${place.phone}`}
                 className="flex-1 flex items-center justify-center gap-2 border border-gray-200 text-gray-700 font-medium py-3 rounded-xl hover:bg-gray-50 transition-colors"
               >
                 <Phone className="w-4 h-4" />
@@ -214,53 +161,19 @@ export default async function DoctorPage({ params }: DoctorPageProps) {
         </div>
       </div>
 
-      {/* Opening Hours */}
-      {safePlace.regularOpeningHours?.weekdayDescriptions && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-3">Opening Hours</h2>
-          <div className="space-y-1.5">
-            {safePlace.regularOpeningHours.weekdayDescriptions.map((line) => {
-              const [day, ...rest] = line.split(": ");
-              return (
-                <div key={line} className="flex justify-between text-sm">
-                  <span className="text-gray-600 font-medium">{day}</span>
-                  <span className="text-gray-500">{rest.join(": ")}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Reviews */}
-      {safePlace.reviews && safePlace.reviews.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Patient Reviews</h2>
-          <div className="space-y-4">
-            {safePlace.reviews.map((review, i) => (
-              <div
-                key={i}
-                className="pb-4 border-b border-gray-50 last:border-0 last:pb-0"
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-medium text-sm text-gray-800">
-                    {review.authorAttribution?.displayName ?? "Anonymous"}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {review.relativePublishTimeDescription}
-                  </span>
-                </div>
-                <StarRow rating={review.rating} />
-                {review.text?.text && (
-                  <p className="text-sm text-gray-600 mt-1.5 leading-relaxed">
-                    {review.text.text}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Data source note */}
+      <div className="text-center text-xs text-gray-400">
+        Data sourced from{" "}
+        <a
+          href="https://www.openstreetmap.org"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-brand-600 underline"
+        >
+          OpenStreetMap
+        </a>{" "}
+        contributors
+      </div>
     </div>
   );
 }
