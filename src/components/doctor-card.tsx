@@ -107,7 +107,7 @@ export function DoctorCard({ doctor, rank, aiReason }: DoctorCardProps) {
       {/* Actions */}
       <div className="flex gap-2 mt-4 pt-4 border-t border-gray-50">
         <Link
-          href={`/doctor/${doctor.google_place_id}`}
+          href={`/doctor/${doctor.google_place_id}?name=${encodeURIComponent(doctor.name)}&address=${encodeURIComponent(doctor.address)}&phone=${encodeURIComponent(doctor.phone ?? "")}&website=${encodeURIComponent(doctor.website ?? "")}`}
           className="flex-1 text-center text-sm font-medium text-brand-600 border border-brand-200 px-3 py-2 rounded-lg hover:bg-brand-50 transition-colors"
         >
           View Profile

@@ -4,6 +4,50 @@ import { Doctor } from "@/lib/types";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!);
 
+// Local ranking used when Gemini is unavailable
+function localRank(doctors: Doctor[], symptoms: string, specialty: string) {
+  const kw = (symptoms + " " + specialty).toLowerCase();
+
+  const scored = doctors.map((d) => {
+    let score = 5;
+    const reasons: string[] = [];
+    const concerns: string[] = [];
+
+    if (d.phone) { score += 1; reasons.push("Has a listed phone number for easy contact"); }
+    if (d.website) { score += 1; reasons.push("Has an official website for more information"); }
+    if (d.address && d.address.length > 10) {
+      score += 1;
+      reasons.push("Full address available for navigation");
+    }
+    if (d.specialty.some((s) => kw.includes(s.toLowerCase()))) {
+      score += 2;
+      reasons.push(`Specialty matches your need: ${d.specialty.join(", ")}`);
+    } else {
+      reasons.push(`Specialty: ${d.specialty.join(", ")}`);
+    }
+    if (!d.phone && !d.website) {
+      concerns.push("Limited contact information available");
+    }
+
+    return { doctor: d, score: parseFloat(score.toFixed(1)), reasons, concerns };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const top = scored.slice(0, 5);
+
+  return {
+    summary: `Based on your need (${symptoms}), we ranked the available facilities by data completeness and specialty match. Top result: ${top[0]?.doctor.name}.`,
+    best_match: top[0]?.doctor.name ?? "",
+    ranked_doctors: top.map((item, i) => ({
+      name: item.doctor.name,
+      rank: i + 1,
+      score: item.score,
+      reasons: item.reasons,
+      concerns: item.concerns,
+    })),
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -30,7 +74,7 @@ export async function POST(req: NextRequest) {
     const doctorList = doctors
       .map(
         (d, i) =>
-          `${i + 1}. ${d.name} | Rating: ${d.rating ?? "N/A"} (${d.reviews_count ?? 0} reviews) | Specialty: ${d.specialty.join(", ")} | Address: ${d.address}`
+          `${i + 1}. ${d.name} | Specialty: ${d.specialty.join(", ")} | Address: ${d.address}${d.phone ? ` | Phone: ${d.phone}` : ""}${d.website ? ` | Website: ${d.website}` : ""}`
       )
       .join("\n");
 
@@ -46,7 +90,7 @@ AVAILABLE DOCTORS:
 ${doctorList}
 
 TASK:
-Analyze the doctors above and rank the top 3-5 best matches for this specific user. Consider: rating, number of reviews, specialty match, location convenience, and the user's language/urgency needs.
+Analyze the doctors above and rank the top 3-5 best matches for this specific user. Consider: specialty match, contact availability, and the user's language/urgency needs.
 
 Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
 {
@@ -63,24 +107,25 @@ Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
   ]
 }`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-
-    // Strip markdown code fences if Gemini wraps the response
-    const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
-
-    let parsed;
     try {
-      parsed = JSON.parse(cleaned);
-    } catch {
-      return NextResponse.json(
-        { error: "AI returned invalid response", raw: text },
-        { status: 502 }
-      );
-    }
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      const parsed = JSON.parse(cleaned);
+      return NextResponse.json({ result: parsed });
+    } catch (geminiErr: unknown) {
+      // Gemini unavailable (quota / key issue) — fall back to local ranking
+      const errMsg = geminiErr instanceof Error ? geminiErr.message : "";
+      const isQuotaOrAuth = errMsg.includes("429") || errMsg.includes("quota") ||
+        errMsg.includes("404") || errMsg.includes("403");
 
-    return NextResponse.json({ result: parsed });
+      if (isQuotaOrAuth) {
+        const fallback = localRank(doctors.slice(0, 10), symptoms, doctors[0]?.specialty[0] ?? "");
+        return NextResponse.json({ result: fallback, fallback: true });
+      }
+      throw geminiErr;
+    }
   } catch (err) {
     console.error("Recommend API error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
-  Star,
   MapPin,
   Phone,
   Globe,
@@ -21,12 +20,9 @@ interface PlaceDetail {
 }
 
 async function fetchOSMDetail(osmId: string): Promise<PlaceDetail | null> {
-  // osmId format: "n123456" (node) or "w789012" (way)
   const type = osmId.startsWith("w") ? "way" : "node";
   const id = osmId.slice(1);
-
   const query = `[out:json];${type}(${id});out;`;
-
   try {
     const res = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
@@ -37,7 +33,6 @@ async function fetchOSMDetail(osmId: string): Promise<PlaceDetail | null> {
     const data = await res.json();
     const el = data.elements?.[0];
     if (!el) return null;
-
     const tags = el.tags ?? {};
     const houseNo = tags["addr:housenumber"] ?? "";
     const street = tags["addr:street"] ?? "";
@@ -46,7 +41,6 @@ async function fetchOSMDetail(osmId: string): Promise<PlaceDetail | null> {
       tags["addr:full"] ||
       [houseNo, street].filter(Boolean).join(" ") +
         (street && addrCity ? `, ${addrCity}` : addrCity);
-
     return {
       id: osmId,
       name: tags.name || tags["name:en"] || "Medical Facility",
@@ -62,11 +56,33 @@ async function fetchOSMDetail(osmId: string): Promise<PlaceDetail | null> {
 
 interface DoctorPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{
+    name?: string;
+    address?: string;
+    phone?: string;
+    website?: string;
+  }>;
 }
 
-export default async function DoctorPage({ params }: DoctorPageProps) {
+export default async function DoctorPage({ params, searchParams }: DoctorPageProps) {
   const { id } = await params;
-  const place = await fetchOSMDetail(id);
+  const sp = await searchParams;
+
+  // Use URL params if available (instant), otherwise fetch from Overpass
+  let place: PlaceDetail | null = null;
+
+  if (sp.name) {
+    place = {
+      id,
+      name: sp.name,
+      address: sp.address ?? "",
+      phone: sp.phone || null,
+      website: sp.website || null,
+      openingHours: null,
+    };
+  } else {
+    place = await fetchOSMDetail(id);
+  }
 
   if (!place) notFound();
 
@@ -76,6 +92,13 @@ export default async function DoctorPage({ params }: DoctorPageProps) {
     .map((w: string) => w[0])
     .join("")
     .toUpperCase();
+
+  let websiteHostname: string | null = null;
+  try {
+    if (place.website) websiteHostname = new URL(place.website).hostname;
+  } catch {
+    websiteHostname = place.website;
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
@@ -117,7 +140,7 @@ export default async function DoctorPage({ params }: DoctorPageProps) {
                 </a>
               </div>
             )}
-            {place.website && (
+            {place.website && websiteHostname && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <a
@@ -126,7 +149,7 @@ export default async function DoctorPage({ params }: DoctorPageProps) {
                   rel="noopener noreferrer"
                   className="hover:text-brand-600 flex items-center gap-1 truncate"
                 >
-                  {new URL(place.website).hostname}
+                  {websiteHostname}
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
