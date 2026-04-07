@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Stethoscope, Menu, X, LogOut, User } from "lucide-react";
+import { Stethoscope, Menu, X, LogOut, User, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navLinks = [
   { href: "/search", label: "Find a Doctor" },
-  { href: "/recommend", label: "AI Recommendation" },
-  { href: "/appointments", label: "My Appointments" },
-  { href: "/suggest", label: "Suggest a Doctor" },
+  { href: "/recommend", label: "AI Recommend" },
+  { href: "/conversation", label: "AI Conversation" },
+  { href: "/appointments", label: "Appointments" },
+  { href: "/suggest", label: "Suggest" },
 ];
 
 export function Navbar() {

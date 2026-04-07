@@ -51,13 +51,17 @@ function localRank(doctors: Doctor[], symptoms: string, specialty: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { doctors, symptoms, language, urgency, insurance, city }: {
+    const { doctors, symptoms, language, urgency, insurance, city, tripDuration, travelPurpose, allergies, conditions }: {
       doctors: Doctor[];
       symptoms: string;
       language: string;
       urgency: string;
       insurance: string;
       city: string;
+      tripDuration?: string;
+      travelPurpose?: string;
+      allergies?: string;
+      conditions?: string;
     } = body;
 
     if (!doctors?.length || !symptoms) {
@@ -78,17 +82,26 @@ USER SITUATION:
 - Preferred language: ${language || "Any"}
 - Urgency: ${urgency || "Not urgent"}
 - Insurance / payment: ${insurance || "Not specified"}
+- Trip duration: ${tripDuration || "Not specified"}
+- Travel purpose: ${travelPurpose || "Not specified"}
+- Known allergies: ${allergies || "None mentioned"}
+- Chronic conditions: ${conditions || "None mentioned"}
 
 AVAILABLE DOCTORS:
 ${doctorList}
 
 TASK:
-Analyze the doctors above and rank the top 3-5 best matches for this specific user. Consider: specialty match, contact availability, and the user's language/urgency needs.
+1. Check if the symptoms describe a MEDICAL EMERGENCY (chest pain, difficulty breathing, stroke signs, severe bleeding, loss of consciousness, poisoning, high fever in infant). If so, set urgency_alert.
+2. Rank the top 3-5 best matching doctors for this user.
+3. Generate 3-4 smart questions the user should ask the doctor at the appointment.
 
 Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
 {
   "summary": "2-3 sentence summary of your recommendation approach",
   "best_match": "Name of the single best doctor",
+  "urgency_alert": null,
+  "questions_to_ask": ["Question 1?", "Question 2?", "Question 3?"],
+  "what_to_bring": ["Item 1", "Item 2", "Item 3"],
   "ranked_doctors": [
     {
       "name": "Doctor Name",
@@ -98,7 +111,11 @@ Respond in this exact JSON format (no markdown, no code blocks, just raw JSON):
       "concerns": ["optional concern"]
     }
   ]
-}`;
+}
+
+If symptoms are a medical emergency, set urgency_alert to a short warning message (e.g. "Your symptoms may indicate a medical emergency. Please go to the nearest emergency room immediately or call emergency services."). Otherwise keep it null.
+
+For what_to_bring, list 3-5 practical items the patient should bring to the appointment (e.g. "Passport or ID", "Travel insurance card", "List of current medications", "Medical records if available"). Tailor to the user's situation (trip duration, purpose, allergies).`;
 
     try {
       const completion = await groq.chat.completions.create({

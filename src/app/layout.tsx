@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
+import { VoiceAgent } from "@/components/voice-agent";
 
 export const metadata: Metadata = {
   title: "TravelDoc AI — Find the Best Doctor in Any City",
@@ -18,6 +19,7 @@ export default function RootLayout({
       <body>
         <Navbar />
         <main>{children}</main>
+        <VoiceAgent />
       </body>
     </html>
   );

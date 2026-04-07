@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Stethoscope, Globe, Search, Clock, X } from "lucide-react";
+import { MapPin, Stethoscope, Globe, Search, Clock, X, LocateFixed, Loader2 } from "lucide-react";
 import { SPECIALTIES, LANGUAGES } from "@/lib/types";
 
 const HISTORY_KEY = "traveldoc_search_history";
@@ -39,6 +39,53 @@ export function SearchForm({ inline = false }: { inline?: boolean }) {
   const [language, setLanguage] = useState("");
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [locError, setLocError] = useState("");
+
+  async function handleUseLocation() {
+    if (!navigator.geolocation) {
+      setLocError("Geolocation is not supported by your browser.");
+      return;
+    }
+    setLocating(true);
+    setLocError("");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          const data = await res.json();
+          const detectedCity =
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.village ||
+            data.address?.county ||
+            "";
+          if (detectedCity) {
+            setCity(detectedCity);
+          } else {
+            setLocError("Could not detect city from your location.");
+          }
+        } catch {
+          setLocError("Failed to reverse geocode location.");
+        } finally {
+          setLocating(false);
+        }
+      },
+      (err) => {
+        setLocating(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocError("Location permission denied. Please allow access and try again.");
+        } else {
+          setLocError("Unable to retrieve your location.");
+        }
+      },
+      { timeout: 10000 }
+    );
+  }
 
   useEffect(() => {
     setHistory(getHistory());
@@ -64,42 +111,55 @@ export function SearchForm({ inline = false }: { inline?: boolean }) {
 
   if (inline) {
     return (
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            onFocus={() => setShowHistory(true)}
-            onBlur={() => setTimeout(() => setShowHistory(false), 150)}
-            placeholder="City (e.g. Istanbul)"
-            className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            required
-          />
-          {showHistory && history.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-              {history.map((item, i) => (
-                <button key={i} type="button" onMouseDown={() => applyHistory(item)}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50 text-left text-sm text-gray-700">
-                  <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <span>{item.city}{item.specialty ? ` · ${item.specialty}` : ""}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <select value={specialty} onChange={(e) => setSpecialty(e.target.value)}
-          className="px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500">
-          <option value="">All specialties</option>
-          {SPECIALTIES.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <button type="submit"
-          className="flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold px-4 py-2.5 rounded-lg hover:bg-brand-700 transition-colors text-sm">
-          <Search className="w-4 h-4" />
-          Search
-        </button>
-      </form>
+      <div className="flex flex-col gap-2">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              onFocus={() => setShowHistory(true)}
+              onBlur={() => setTimeout(() => setShowHistory(false), 150)}
+              placeholder="City (e.g. Istanbul)"
+              className="w-full pl-9 pr-28 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              required
+            />
+            <button
+              type="button"
+              onClick={handleUseLocation}
+              disabled={locating}
+              title="Use my current location"
+              className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50 px-1 py-0.5"
+            >
+              {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LocateFixed className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">My location</span>
+            </button>
+            {showHistory && history.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                {history.map((item, i) => (
+                  <button key={i} type="button" onMouseDown={() => applyHistory(item)}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-gray-50 text-left text-sm text-gray-700">
+                    <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <span>{item.city}{item.specialty ? ` · ${item.specialty}` : ""}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <select value={specialty} onChange={(e) => setSpecialty(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <option value="">All specialties</option>
+            {SPECIALTIES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <button type="submit"
+            className="flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold px-4 py-2.5 rounded-lg hover:bg-brand-700 transition-colors text-sm">
+            <Search className="w-4 h-4" />
+            Search
+          </button>
+        </form>
+        {locError && <p className="text-xs text-red-600 px-1">{locError}</p>}
+      </div>
     );
   }
 
@@ -108,7 +168,21 @@ export function SearchForm({ inline = false }: { inline?: boolean }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
         {/* City with history */}
         <div className="relative">
-          <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-1">City</label>
+          <div className="flex items-center justify-between mb-1.5 ml-1">
+            <label className="block text-xs font-medium text-gray-500">City</label>
+            <button
+              type="button"
+              onClick={handleUseLocation}
+              disabled={locating}
+              className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50 transition-colors"
+            >
+              {locating
+                ? <Loader2 className="w-3 h-3 animate-spin" />
+                : <LocateFixed className="w-3 h-3" />}
+              Use my location
+            </button>
+          </div>
+          {locError && <p className="text-xs text-red-500 mb-1 ml-1">{locError}</p>}
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
