@@ -53,8 +53,9 @@ export async function SearchResults({ city, specialty, language }: SearchResults
 
       {doctors.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
-          <p className="text-lg font-medium mb-2">No doctors found</p>
-          <p className="text-sm">Try a different city or specialty</p>
+          <p className="text-lg font-medium mb-2">No results found</p>
+          <p className="text-sm mb-1">The map data server may be busy. Please try again in a few seconds.</p>
+          <p className="text-sm">Or try a different city name (e.g. &quot;Istanbul&quot;, &quot;London&quot;, &quot;Dubai&quot;)</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
