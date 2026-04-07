@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star, MapPin, Phone, Globe, Languages, Share2, Check } from "lucide-react";
+import { Star, MapPin, Phone, Globe, Languages, Share2, Check, Navigation } from "lucide-react";
 import { Doctor } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -92,8 +92,19 @@ export function DoctorCard({ doctor, rank, aiReason }: DoctorCardProps) {
             </div>
             {doctor.phone && (
               <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{doctor.phone}</span>
+                <Phone className="w-3.5 h-3.5 flex-shrink-0 text-green-500" />
+                <a href={`tel:${doctor.phone}`} className="text-green-600 font-medium hover:underline">
+                  {doctor.phone}
+                </a>
+              </div>
+            )}
+            {doctor.website && (
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <Globe className="w-3.5 h-3.5 flex-shrink-0 text-blue-500" />
+                <a href={doctor.website} target="_blank" rel="noopener noreferrer"
+                  className="text-blue-600 font-medium hover:underline truncate">
+                  {(() => { try { return new URL(doctor.website).hostname; } catch { return doctor.website; } })()}
+                </a>
               </div>
             )}
             {doctor.languages.length > 0 && (
@@ -114,8 +125,33 @@ export function DoctorCard({ doctor, rank, aiReason }: DoctorCardProps) {
         </div>
       </div>
 
+      {/* Quick contact buttons */}
+      {(doctor.phone || doctor.website || doctor.address) && (
+        <div className="flex gap-2 mt-3">
+          {doctor.phone && (
+            <a href={`tel:${doctor.phone}`}
+              className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-2 rounded-lg hover:bg-green-100 transition-colors">
+              <Phone className="w-3.5 h-3.5" /> Call
+            </a>
+          )}
+          {doctor.website && (
+            <a href={doctor.website} target="_blank" rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-2 rounded-lg hover:bg-blue-100 transition-colors">
+              <Globe className="w-3.5 h-3.5" /> Website
+            </a>
+          )}
+          {doctor.address && (
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(doctor.address)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-2 rounded-lg hover:bg-orange-100 transition-colors">
+              <Navigation className="w-3.5 h-3.5" /> Directions
+            </a>
+          )}
+        </div>
+      )}
+
       {/* Actions */}
-      <div className="flex gap-2 mt-4 pt-4 border-t border-gray-50">
+      <div className="flex gap-2 mt-3 pt-3 border-t border-gray-50">
         <Link
           href={`/doctor/${doctor.google_place_id}?name=${encodeURIComponent(doctor.name)}&address=${encodeURIComponent(doctor.address)}&phone=${encodeURIComponent(doctor.phone ?? "")}&website=${encodeURIComponent(doctor.website ?? "")}`}
           className="flex-1 text-center text-sm font-medium text-brand-600 border border-brand-200 px-3 py-2 rounded-lg hover:bg-brand-50 transition-colors"
