@@ -120,17 +120,19 @@ export function SearchResults({ city, specialty, language }: SearchResultsProps)
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+      {/* Header — two rows so controls never overflow on mobile */}
+      <div className="mb-4 space-y-3">
+
+        {/* Row 1: title + meta */}
         <div>
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-snug">
             {specialty ? `${specialty} doctors` : "Doctors"} in{" "}
             <span className="text-brand-600">{city}</span>
           </h1>
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <p className="text-sm text-gray-500">
-              {doctors.length} results found
-              {language ? ` · ${language} speakers` : ""}
+              {doctors.length} results
+              {language ? ` · ${language}` : ""}
             </p>
             {sortedByDistance && (
               <span className="flex items-center gap-1 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">
@@ -139,37 +141,43 @@ export function SearchResults({ city, specialty, language }: SearchResultsProps)
               </span>
             )}
             {locationError && (
-              <span className="text-xs text-red-500">Location access denied</span>
+              <span className="text-xs text-red-500">Location denied</span>
             )}
           </div>
         </div>
 
+        {/* Row 2: action controls — all visible on every screen size */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Sort by nearest button */}
+
+          {/* Sort by nearest */}
           {!sortedByDistance && (
             <button
               onClick={requestLocation}
               disabled={locationLoading}
-              className="flex items-center gap-1.5 text-sm font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-3 py-2 rounded-lg hover:bg-teal-100 transition-colors disabled:opacity-60 flex-shrink-0"
+              className="flex items-center gap-1.5 text-sm font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-3 py-2 rounded-lg hover:bg-teal-100 transition-colors disabled:opacity-60"
             >
-              {locationLoading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <MapPin className="w-3.5 h-3.5" />
-              )}
-              {locationLoading ? "Getting location..." : "Sort by nearest"}
+              {locationLoading
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <MapPin className="w-3.5 h-3.5" />}
+              <span className="hidden xs:inline sm:inline">
+                {locationLoading ? "Locating..." : "Sort by nearest"}
+              </span>
+              <span className="xs:hidden sm:hidden">
+                {locationLoading ? "..." : "Nearest"}
+              </span>
             </button>
           )}
 
-          {/* View toggle */}
-          <div className="hidden sm:flex items-center border border-gray-200 rounded-lg overflow-hidden">
+          {/* List / Map toggle — visible on all sizes, icon-only on mobile */}
+          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
             <button
               onClick={() => setView("list")}
               className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${
                 view === "list" ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-50"
               }`}
             >
-              <List className="w-4 h-4" /> List
+              <List className="w-4 h-4" />
+              <span className="hidden sm:inline">List</span>
             </button>
             <button
               onClick={() => setView("map")}
@@ -177,16 +185,18 @@ export function SearchResults({ city, specialty, language }: SearchResultsProps)
                 view === "map" ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-50"
               }`}
             >
-              <Map className="w-4 h-4" /> Map
+              <Map className="w-4 h-4" />
+              <span className="hidden sm:inline">Map</span>
             </button>
           </div>
 
+          {/* AI recommendation — icon-only on mobile, full label on desktop */}
           <Link
             href={`/recommend?city=${encodeURIComponent(city)}${specialty ? `&specialty=${encodeURIComponent(specialty)}` : ""}`}
-            className="hidden sm:flex items-center gap-2 text-sm font-medium text-brand-600 border border-brand-200 px-4 py-2 rounded-lg hover:bg-brand-50 transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-brand-600 border border-brand-200 px-3 py-2 rounded-lg hover:bg-brand-50 transition-colors"
           >
-            <Brain className="w-4 h-4" />
-            AI recommendation
+            <Brain className="w-4 h-4 flex-shrink-0" />
+            <span className="hidden sm:inline">AI recommendation</span>
           </Link>
         </div>
       </div>
@@ -205,12 +215,11 @@ export function SearchResults({ city, specialty, language }: SearchResultsProps)
       ) : view === "map" ? (
         <MapView doctors={doctors} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {doctors.map((doctor, index) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+          {doctors.map((doctor) => (
             <DoctorCard
               key={doctor.google_place_id}
               doctor={doctor}
-              rank={sortedByDistance && index === 0 ? undefined : undefined}
               distanceKm={doctor.distance_km}
             />
           ))}

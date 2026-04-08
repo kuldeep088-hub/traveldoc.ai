@@ -112,8 +112,9 @@ export function SearchForm({ inline = false }: { inline?: boolean }) {
   if (inline) {
     return (
       <div className="flex flex-col gap-2">
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+          {/* Row 1: city input (full width) */}
+          <div className="relative">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -121,7 +122,7 @@ export function SearchForm({ inline = false }: { inline?: boolean }) {
               onChange={(e) => setCity(e.target.value)}
               onFocus={() => setShowHistory(true)}
               onBlur={() => setTimeout(() => setShowHistory(false), 150)}
-              placeholder="City (e.g. Istanbul)"
+              placeholder="City (e.g. Istanbul, Delhi, Dubai)"
               className="w-full pl-9 pr-28 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               required
             />
@@ -147,16 +148,20 @@ export function SearchForm({ inline = false }: { inline?: boolean }) {
               </div>
             )}
           </div>
-          <select value={specialty} onChange={(e) => setSpecialty(e.target.value)}
-            className="px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500">
-            <option value="">All specialties</option>
-            {SPECIALTIES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <button type="submit"
-            className="flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold px-4 py-2.5 rounded-lg hover:bg-brand-700 transition-colors text-sm">
-            <Search className="w-4 h-4" />
-            Search
-          </button>
+
+          {/* Row 2: specialty + search button side by side */}
+          <div className="flex gap-2">
+            <select value={specialty} onChange={(e) => setSpecialty(e.target.value)}
+              className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
+              <option value="">All specialties</option>
+              {SPECIALTIES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <button type="submit"
+              className="flex items-center justify-center gap-2 bg-brand-600 text-white font-semibold px-4 py-2.5 rounded-lg hover:bg-brand-700 transition-colors text-sm flex-shrink-0">
+              <Search className="w-4 h-4" />
+              <span className="hidden sm:inline">Search</span>
+            </button>
+          </div>
         </form>
         {locError && <p className="text-xs text-red-600 px-1">{locError}</p>}
       </div>
