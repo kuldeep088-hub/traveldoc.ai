@@ -13,8 +13,24 @@ export interface Doctor {
   photo_url: string | null;
   lat: number | null;
   lng: number | null;
+  distance_km?: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface Review {
+  id: string;
+  doctor_osm_id: string;
+  user_id: string;
+  rating: number;
+  review_text: string | null;
+  created_at: string;
+}
+
+export interface AutoBookResult {
+  best_doctor: Doctor & { distance_km: number };
+  suggested_slots: { date: string; time: string }[];
+  ai_reason: string;
 }
 
 export interface Appointment {

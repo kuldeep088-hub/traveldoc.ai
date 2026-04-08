@@ -6,6 +6,7 @@ import {
   AlertTriangle, ArrowLeft, ArrowRight, CheckCircle,
   Send, Thermometer, ShieldAlert, Heart, Clock, Stethoscope,
 } from "lucide-react";
+import { AutoBookPanel } from "@/components/autobook-panel";
 
 interface Message {
   role: "user" | "assistant";
@@ -301,6 +302,11 @@ export default function SymptomCheckPage() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Auto-book panel — only for doctor_today urgency */}
+        {assessment && assessment.urgency === "doctor_today" && (
+          <AutoBookPanel specialty={assessment.specialty} />
         )}
 
         <div ref={bottomRef} />

@@ -4,6 +4,7 @@ import {
   Brain, Calendar, MapPin, LocateFixed, GitCompare,
   Mic, PlusCircle, Map, MessageSquare, Search,
   ArrowRight, CheckCircle, Stethoscope, Globe2, Thermometer,
+  Navigation, Star,
 } from "lucide-react";
 
 const features = [
@@ -58,13 +59,23 @@ const features = [
     badge: null,
   },
   {
-    icon: LocateFixed,
-    title: "Use My Location",
+    icon: Navigation,
+    title: "Best Doctor Near Me",
     description:
-      "One tap to detect your city automatically. Instantly finds doctors closest to where you are right now.",
-    href: "/search",
+      "Allow location access — AI instantly finds the closest doctors sorted by distance, with ratings and one-tap booking.",
+    href: "/near-me",
     cta: "Find near me",
     color: "teal",
+    badge: "Auto-book",
+  },
+  {
+    icon: Star,
+    title: "Ratings & Reviews",
+    description:
+      "Real patient ratings on every doctor. Leave a review after your appointment and help other travelers find great care.",
+    href: "/search",
+    cta: "Browse rated doctors",
+    color: "yellow",
     badge: null,
   },
   {
@@ -308,7 +319,7 @@ export default function HomePage() {
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Quick access</p>
               {[
                 { label: "I feel sick right now", href: "/symptom-check", icon: Thermometer, red: true },
-                { label: "Find doctors near me", href: "/search", icon: MapPin, red: false },
+                { label: "Best doctor near me", href: "/near-me", icon: Navigation, red: false },
                 { label: "AI doctor recommendation", href: "/recommend", icon: Brain, red: false },
                 { label: "Chat or speak with AI", href: "/conversation", icon: MessageSquare, red: false },
                 { label: "My appointments", href: "/appointments", icon: Calendar, red: false },

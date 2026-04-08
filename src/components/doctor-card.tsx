@@ -1,16 +1,18 @@
 import Link from "next/link";
-import { Star, MapPin, Phone, Globe, Languages, Share2, Check, Navigation } from "lucide-react";
+import { MapPin, Phone, Globe, Languages, Share2, Check, Navigation } from "lucide-react";
 import { Doctor } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { StarRating } from "./star-rating";
 
 interface DoctorCardProps {
   doctor: Doctor;
   rank?: number;
   aiReason?: string;
+  distanceKm?: number;
 }
 
-export function DoctorCard({ doctor, rank, aiReason }: DoctorCardProps) {
+export function DoctorCard({ doctor, rank, aiReason, distanceKm }: DoctorCardProps) {
   const [copied, setCopied] = useState(false);
 
   function handleShare() {
@@ -70,16 +72,8 @@ export function DoctorCard({ doctor, rank, aiReason }: DoctorCardProps) {
 
             {/* Rating */}
             {doctor.rating && (
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                <span className="text-sm font-semibold text-gray-800">
-                  {doctor.rating.toFixed(1)}
-                </span>
-                {doctor.reviews_count && (
-                  <span className="text-xs text-gray-400">
-                    ({doctor.reviews_count.toLocaleString()})
-                  </span>
-                )}
+              <div className="flex-shrink-0">
+                <StarRating value={doctor.rating} reviewsCount={doctor.reviews_count} />
               </div>
             )}
           </div>
@@ -89,6 +83,11 @@ export function DoctorCard({ doctor, rank, aiReason }: DoctorCardProps) {
             <div className="flex items-center gap-1.5 text-xs text-gray-500">
               <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="truncate">{doctor.address}</span>
+              {(distanceKm ?? doctor.distance_km) != null && (
+                <span className="ml-auto flex-shrink-0 text-xs font-semibold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded-full">
+                  {(distanceKm ?? doctor.distance_km)!.toFixed(1)} km
+                </span>
+              )}
             </div>
             {doctor.phone && (
               <div className="flex items-center gap-1.5 text-xs text-gray-500">

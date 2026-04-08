@@ -19,6 +19,14 @@ function localRank(doctors: Doctor[], symptoms: string, specialty: string) {
       score += 1;
       reasons.push("Full address available for navigation");
     }
+    if (d.rating) {
+      score += d.rating * 0.5;
+      reasons.push(`Patient rating: ${d.rating.toFixed(1)}/5 (${d.reviews_count ?? 0} reviews)`);
+    }
+    if (d.distance_km != null && d.distance_km < 5) {
+      score += 2;
+      reasons.push(`Only ${d.distance_km} km away`);
+    }
     if (d.specialty.some((s) => kw.includes(s.toLowerCase()))) {
       score += 2;
       reasons.push(`Specialty matches your need: ${d.specialty.join(", ")}`);
@@ -71,7 +79,7 @@ export async function POST(req: NextRequest) {
     const doctorList = doctors
       .slice(0, 10)
       .map((d, i) =>
-        `${i + 1}. ${d.name} | Specialty: ${d.specialty.join(", ")} | Address: ${d.address}${d.phone ? ` | Phone: ${d.phone}` : ""}${d.website ? ` | Website: ${d.website}` : ""}`
+        `${i + 1}. ${d.name} | Specialty: ${d.specialty.join(", ")} | Address: ${d.address}${d.rating ? ` | Rating: ${d.rating.toFixed(1)}/5 (${d.reviews_count ?? 0} reviews)` : ""}${d.distance_km != null ? ` | Distance: ${d.distance_km} km` : ""}${d.phone ? ` | Phone: ${d.phone}` : ""}${d.website ? ` | Website: ${d.website}` : ""}`
       )
       .join("\n");
 

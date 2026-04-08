@@ -6,6 +6,7 @@ import {
   Copy, CheckCircle,
 } from "lucide-react";
 import CopyPhone from "./copy-phone";
+import { ReviewSection } from "./review-section";
 
 interface PlaceDetail {
   id: string;
@@ -256,6 +257,9 @@ export default async function DoctorPage({ params, searchParams }: DoctorPagePro
           Book Appointment
         </Link>
       </div>
+
+      {/* Reviews */}
+      <ReviewSection doctorOsmId={id} />
 
       {/* Data source */}
       <div className="text-center text-xs text-gray-400 mt-6">
