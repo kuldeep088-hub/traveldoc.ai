@@ -12,6 +12,7 @@ const navLinks = [
   { href: "/symptom-check", label: "I Feel Sick", highlight: true },
   { href: "/near-me", label: "Near Me", highlight: false },
   { href: "/search", label: "Find a Doctor", highlight: false },
+  { href: "/medication", label: "Medication", highlight: false },
   { href: "/recommend", label: "AI Recommend", highlight: false },
   { href: "/conversation", label: "AI Conversation", highlight: false },
   { href: "/appointments", label: "Appointments", highlight: false },

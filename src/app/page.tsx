@@ -4,7 +4,7 @@ import {
   Brain, Calendar, MapPin, LocateFixed, GitCompare,
   Mic, PlusCircle, Map, MessageSquare, Search,
   ArrowRight, CheckCircle, Stethoscope, Globe2, Thermometer,
-  Navigation, Star,
+  Navigation, Star, Pill,
 } from "lucide-react";
 
 const features = [
@@ -77,6 +77,16 @@ const features = [
     cta: "Browse rated doctors",
     color: "yellow",
     badge: null,
+  },
+  {
+    icon: Pill,
+    title: "Medication Finder",
+    description:
+      "Taking Metformin? Heading to Japan? Find the local brand name, get a pharmacy phrase in Japanese, and know if you need a prescription.",
+    href: "/medication",
+    cta: "Find my medication",
+    color: "purple",
+    badge: "New",
   },
   {
     icon: GitCompare,
@@ -320,6 +330,7 @@ export default function HomePage() {
               {[
                 { label: "I feel sick right now", href: "/symptom-check", icon: Thermometer, red: true },
                 { label: "Best doctor near me", href: "/near-me", icon: Navigation, red: false },
+                { label: "Find my medication abroad", href: "/medication", icon: Pill, red: false },
                 { label: "AI doctor recommendation", href: "/recommend", icon: Brain, red: false },
                 { label: "Chat or speak with AI", href: "/conversation", icon: MessageSquare, red: false },
                 { label: "My appointments", href: "/appointments", icon: Calendar, red: false },
