@@ -30,7 +30,7 @@ async function callVisionModel(
   mimeType: string,
   prompt: string
 ): Promise<string> {
-  let lastError: unknown;
+  let lastError: unknown = new Error("No vision models configured");
 
   for (const model of VISION_MODELS) {
     try {

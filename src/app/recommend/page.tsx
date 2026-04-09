@@ -78,6 +78,7 @@ export default function RecommendPage() {
       if (specialty) params.set("specialty", specialty);
       if (language) params.set("language", language);
       const searchRes = await fetch(`/api/doctors/search?${params.toString()}`);
+      if (!searchRes.ok) throw new Error(`Search failed: HTTP ${searchRes.status}`);
       const searchData = await searchRes.json();
       const fetchedDoctors: Doctor[] = searchData.doctors ?? [];
       setDoctors(fetchedDoctors);
@@ -97,6 +98,7 @@ export default function RecommendPage() {
           tripDuration, travelPurpose, allergies, conditions,
         }),
       });
+      if (!recRes.ok) throw new Error(`Recommendation failed: HTTP ${recRes.status}`);
       const recData = await recRes.json();
       if (recData.result) {
         setResult(recData.result);
@@ -146,7 +148,11 @@ export default function RecommendPage() {
   }
 
   function getDoctorByName(name: string): Doctor | undefined {
-    return doctors.find((d) => d.name.toLowerCase().includes(name.toLowerCase()));
+    const lower = name.toLowerCase();
+    return (
+      doctors.find((d) => d.name.toLowerCase() === lower) ??
+      doctors.find((d) => d.name.toLowerCase().includes(lower))
+    );
   }
 
   function reset() {

@@ -217,10 +217,12 @@ export async function GET(req: NextRequest) {
   let doctors: Doctor[] = elements
     .map((el) => elementToDoctor(el, city, specialty));
 
-  // Deduplicate by name + address
+  // Deduplicate by name + address (use coords as tiebreaker when address is empty)
   const seen = new Set<string>();
   doctors = doctors.filter((d) => {
-    const key = `${d.name}|${d.address}`;
+    const key = d.address
+      ? `${d.name}|${d.address}`
+      : `${d.name}|${d.lat}|${d.lng}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

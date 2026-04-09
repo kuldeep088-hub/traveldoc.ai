@@ -71,7 +71,10 @@ export function SearchResults({ city, specialty, language }: SearchResultsProps)
     if (language) params.set("language", language);
 
     fetch(`/api/doctors/search?${params.toString()}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((d) => {
         let fetched: Doctor[] = d.doctors ?? [];
         // If we already have coords from a prior search, apply distances immediately
@@ -81,6 +84,7 @@ export function SearchResults({ city, specialty, language }: SearchResultsProps)
         }
         setDoctors(fetched);
       })
+      .catch(() => setDoctors([]))
       .finally(() => setLoading(false));
   }, [city, specialty, language]);
 

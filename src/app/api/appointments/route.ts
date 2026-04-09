@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Upsert doctor stub so the foreign key is satisfied
-  await supabase.from("doctors").upsert(
+  const { error: upsertError } = await supabase.from("doctors").upsert(
     {
       id: doctor_id,
       google_place_id: doctor_id,
@@ -81,6 +81,10 @@ export async function POST(req: NextRequest) {
     },
     { onConflict: "google_place_id", ignoreDuplicates: true }
   );
+  if (upsertError) {
+    console.error("[appointments] doctor upsert failed:", upsertError.message);
+    return NextResponse.json({ error: "Could not create appointment — doctor record failed." }, { status: 500 });
+  }
 
   const { data, error } = await supabase
     .from("appointments")

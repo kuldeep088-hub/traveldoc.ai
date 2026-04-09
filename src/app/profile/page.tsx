@@ -20,8 +20,12 @@ export default function ProfilePage() {
       if (!data.user) { router.push("/auth/login"); return; }
       setUser(data.user);
       fetch("/api/appointments")
-        .then((r) => r.json())
+        .then((r) => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
         .then((d) => setAppointments(d.appointments ?? []))
+        .catch(() => {})
         .finally(() => setLoading(false));
     });
   }, [router]);
