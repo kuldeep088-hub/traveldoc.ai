@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import { PDFParse } from "pdf-parse";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const VISION_MODEL = "llama-3.2-11b-vision-preview";
@@ -27,13 +28,13 @@ Analyze the medical report and respond ONLY with valid JSON (no markdown, no cod
 
 {
   "reportType": "e.g. Blood Test / X-Ray / Prescription / ECG / Urine Test / MRI",
-  "summary": "2–3 sentence simple overall explanation of what this report shows",
+  "summary": "2-3 sentence simple overall explanation of what this report shows",
   "urgency": "none OR see_doctor OR urgent",
   "findings": [
     {
       "test": "Test or parameter name",
       "value": "Measured value with unit (e.g. 110 mg/dL)",
-      "normalRange": "Normal reference range if visible (e.g. 70–100 mg/dL)",
+      "normalRange": "Normal reference range if visible (e.g. 70-100 mg/dL)",
       "status": "normal OR attention OR critical",
       "meaning": "One simple sentence: what this result means for the patient"
     }
@@ -44,11 +45,17 @@ Analyze the medical report and respond ONLY with valid JSON (no markdown, no cod
 }
 
 Rules:
-- Use only simple words — avoid complex medical terms
-- status "critical" = potentially life-threatening; "attention" = outside normal range; "normal" = within range
-- For urgency: "urgent" only for life-threatening findings, "see_doctor" for abnormal values, "none" if all normal
-- Include 1–3 practical, actionable recommendations
-- If you cannot read the report clearly, still return JSON with summary explaining what you could/could not read`;
+- Use only simple words, avoid complex medical terms
+- status critical = potentially life-threatening; attention = outside normal range; normal = within range
+- urgency urgent only for life-threatening findings, see_doctor for abnormal values, none if all normal
+- Include 1-3 practical actionable recommendations
+- If you cannot read the report clearly, still return JSON with summary explaining what you could not read`;
+}
+
+async function extractPDFText(buffer: Buffer): Promise<string> {
+  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  const result = await parser.getText();
+  return result.text?.trim() ?? "";
 }
 
 export async function POST(req: NextRequest) {
@@ -61,41 +68,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
     }
 
-    const MAX_SIZE = 4 * 1024 * 1024; // 4MB — Vercel free tier limit
+    const MAX_SIZE = 4 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { error: "File too large. Please upload a file under 4MB." },
+        { error: "File too large. Please upload under 4MB." },
         { status: 400 }
       );
     }
 
     const prompt = buildPrompt(language);
+    const buffer = Buffer.from(await file.arrayBuffer());
 
     if (file.type === "application/pdf") {
-      // PDF: extract text, send to text model
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let pdfParse: any;
+      // Extract text from PDF
+      let text = "";
       try {
-        // Use lib path directly to avoid pdf-parse test-file issue in Next.js
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        pdfParse = require("pdf-parse/lib/pdf-parse");
-      } catch {
+        text = await extractPDFText(buffer);
+      } catch (pdfErr) {
+        console.error("[report-analysis] PDF extraction error:", pdfErr);
         return NextResponse.json(
-          { error: "PDF support requires the pdf-parse package. Please upload an image (photo) of your report instead." },
-          { status: 500 }
+          { error: "Could not read this PDF. It may be a scanned image — please take a photo of the report and upload that instead." },
+          { status: 400 }
         );
       }
 
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const pdfData = await pdfParse(buffer);
-      const text = pdfData.text?.trim();
-
       if (!text || text.length < 20) {
         return NextResponse.json(
-          {
-            error:
-              "Could not extract text from this PDF (it may be a scanned image). Please take a photo of the report and upload that instead.",
-          },
+          { error: "This PDF appears to be a scanned image with no extractable text. Please take a photo of the report and upload that instead." },
           { status: 400 }
         );
       }
@@ -107,20 +106,15 @@ export async function POST(req: NextRequest) {
         max_tokens: 1500,
         messages: [
           { role: "system", content: prompt },
-          {
-            role: "user",
-            content: `Here is the medical report text:\n\n${text.slice(0, 8000)}`,
-          },
+          { role: "user", content: `Medical report text:\n\n${text.slice(0, 8000)}` },
         ],
       });
 
-      const result = JSON.parse(
-        completion.choices[0].message.content || "{}"
-      );
+      const result = JSON.parse(completion.choices[0].message.content || "{}");
       return NextResponse.json({ result });
+
     } else {
-      // Image: send to vision model
-      const buffer = Buffer.from(await file.arrayBuffer());
+      // Image upload — send to vision model
       const base64 = buffer.toString("base64");
       const mimeType = file.type || "image/jpeg";
 
@@ -132,29 +126,22 @@ export async function POST(req: NextRequest) {
           {
             role: "user",
             content: [
-              {
-                type: "image_url",
-                image_url: { url: `data:${mimeType};base64,${base64}` },
-              },
-              {
-                type: "text",
-                text:
-                  prompt +
-                  "\n\nAnalyze the medical report shown in this image.",
-              },
+              { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
+              { type: "text", text: prompt + "\n\nAnalyze the medical report shown in this image." },
             ],
           },
         ],
       });
 
-      const content = completion.choices[0].message.content || "{}";
-      const result = extractJSON(content);
+      const result = extractJSON(completion.choices[0].message.content || "{}");
       return NextResponse.json({ result });
     }
-  } catch (err) {
+
+  } catch (err: unknown) {
     console.error("[report-analysis] error:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to analyze report. Please try again." },
+      { error: `Failed to analyze report: ${message}` },
       { status: 500 }
     );
   }

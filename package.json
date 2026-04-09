@@ -25,6 +25,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.400.0",
     "next": "^15.2.4",
+    "pdf-parse": "^2.4.5",
     "react": "^18",
     "react-dom": "^18",
     "react-leaflet": "^5.0.0",
