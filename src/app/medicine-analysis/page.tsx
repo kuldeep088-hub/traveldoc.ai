@@ -85,11 +85,18 @@ export default function MedicineAnalysisPage() {
       fd.append("image", image);
       fd.append("language", language);
       const res = await fetch("/api/medicine-analysis", { method: "POST", body: fd });
-      const data = await res.json();
+      const raw = await res.text();
+      let data: { error?: string; result?: MedResult };
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        setError(`Server error (${res.status}). Please try again.`);
+        return;
+      }
       if (!res.ok || data.error) setError(data.error || "Something went wrong.");
-      else { setResult(data.result); setTab("uses"); }
+      else if (data.result) { setResult(data.result); setTab("uses"); }
     } catch {
-      setError("Network error. Please check your connection.");
+      setError("Request failed. Please try again.");
     } finally {
       setLoading(false);
     }

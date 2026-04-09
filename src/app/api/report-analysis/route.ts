@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
-import { PDFParse } from "pdf-parse";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const VISION_MODEL = "llama-3.2-11b-vision-preview";
@@ -53,6 +52,8 @@ Rules:
 }
 
 async function extractPDFText(buffer: Buffer): Promise<string> {
+  // Dynamic import avoids module-level crash if pdfjs-dist has Node.js init issues
+  const { PDFParse } = await import("pdf-parse");
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
   const result = await parser.getText();
   return result.text?.trim() ?? "";

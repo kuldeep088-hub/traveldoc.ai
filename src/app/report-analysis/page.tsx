@@ -76,11 +76,18 @@ export default function ReportAnalysisPage() {
       fd.append("file", file);
       fd.append("language", language);
       const res = await fetch("/api/report-analysis", { method: "POST", body: fd });
-      const data = await res.json();
+      const raw = await res.text();
+      let data: { error?: string; result?: ReportResult };
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        setError(`Server error (${res.status}). Please try again.`);
+        return;
+      }
       if (!res.ok || data.error) setError(data.error || "Something went wrong.");
-      else setResult(data.result);
+      else if (data.result) setResult(data.result);
     } catch {
-      setError("Network error. Please check your connection.");
+      setError("Request failed. Please try again.");
     } finally {
       setLoading(false);
     }
