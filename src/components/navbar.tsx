@@ -9,13 +9,14 @@ import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navLinks = [
-  { href: "/symptom-check", label: "I Feel Sick", highlight: true },
-  { href: "/near-me", label: "Near Me", highlight: false },
-  { href: "/search", label: "Find a Doctor", highlight: false },
-  { href: "/medication", label: "Medication", highlight: false },
-  { href: "/recommend", label: "AI Recommend", highlight: false },
-  { href: "/conversation", label: "AI Conversation", highlight: false },
-  { href: "/appointments", label: "Appointments", highlight: false },
+  { href: "/symptom-check",    label: "I Feel Sick",   highlight: true  },
+  { href: "/near-me",          label: "Near Me",        highlight: false },
+  { href: "/search",           label: "Find Doctor",    highlight: false },
+  { href: "/medication",       label: "Medication",     highlight: false },
+  { href: "/report-analysis",  label: "Report",         highlight: false },
+  { href: "/medicine-analysis",label: "Scan Med",       highlight: false },
+  { href: "/recommend",        label: "Recommend",      highlight: false },
+  { href: "/appointments",     label: "Appointments",   highlight: false },
 ];
 
 export function Navbar() {
@@ -51,7 +52,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-3">
             {navLinks.map((link) => (
               link.highlight ? (
                 <Link

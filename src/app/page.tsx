@@ -4,7 +4,7 @@ import {
   Brain, Calendar, MapPin, LocateFixed, GitCompare,
   Mic, PlusCircle, Map, MessageSquare, Search,
   ArrowRight, CheckCircle, Stethoscope, Globe2, Thermometer,
-  Navigation, Star, Pill,
+  Navigation, Star, Pill, ClipboardList, ScanLine,
 } from "lucide-react";
 
 const features = [
@@ -119,6 +119,26 @@ const features = [
     badge: null,
   },
   {
+    icon: ClipboardList,
+    title: "Medical Report Reader",
+    description:
+      "Upload any blood test, X-ray, ECG, or prescription. AI reads it and explains every result in simple language — Hindi supported.",
+    href: "/report-analysis",
+    cta: "Read my report",
+    color: "sky",
+    badge: "New",
+  },
+  {
+    icon: ScanLine,
+    title: "Medicine Scanner",
+    description:
+      "Photo any medicine packet or strip. AI identifies it and tells you uses, dosage, side effects, precautions, and storage — in Hindi too.",
+    href: "/medicine-analysis",
+    cta: "Scan a medicine",
+    color: "emerald",
+    badge: "New",
+  },
+  {
     icon: PlusCircle,
     title: "Suggest a Doctor",
     description:
@@ -140,7 +160,9 @@ const colorMap: Record<string, { bg: string; icon: string; badge: string; border
   indigo: { bg: "bg-indigo-50", icon: "text-indigo-600 bg-indigo-100", badge: "bg-indigo-100 text-indigo-600", border: "hover:border-indigo-200" },
   rose:   { bg: "bg-rose-50",   icon: "text-rose-600 bg-rose-100",   badge: "bg-rose-100 text-rose-600",   border: "hover:border-rose-200" },
   pink:   { bg: "bg-pink-50",   icon: "text-pink-600 bg-pink-100",   badge: "bg-pink-100 text-pink-600",   border: "hover:border-pink-200" },
-  yellow: { bg: "bg-yellow-50", icon: "text-yellow-600 bg-yellow-100", badge: "bg-yellow-100 text-yellow-600", border: "hover:border-yellow-200" },
+  yellow:  { bg: "bg-yellow-50",  icon: "text-yellow-600 bg-yellow-100",  badge: "bg-yellow-100 text-yellow-600",  border: "hover:border-yellow-200"  },
+  sky:     { bg: "bg-sky-50",     icon: "text-sky-600 bg-sky-100",        badge: "bg-sky-600 text-white",         border: "hover:border-sky-200"     },
+  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600 bg-emerald-100", badge: "bg-emerald-600 text-white",   border: "hover:border-emerald-200" },
 };
 
 const stats = [
@@ -330,6 +352,8 @@ export default function HomePage() {
               {[
                 { label: "I feel sick right now", href: "/symptom-check", icon: Thermometer, red: true },
                 { label: "Best doctor near me", href: "/near-me", icon: Navigation, red: false },
+                { label: "Read my medical report", href: "/report-analysis", icon: ClipboardList, red: false },
+                { label: "Scan a medicine", href: "/medicine-analysis", icon: ScanLine, red: false },
                 { label: "Find my medication abroad", href: "/medication", icon: Pill, red: false },
                 { label: "AI doctor recommendation", href: "/recommend", icon: Brain, red: false },
                 { label: "Chat or speak with AI", href: "/conversation", icon: MessageSquare, red: false },
