@@ -1,424 +1,164 @@
 import Link from "next/link";
 import { SearchForm } from "@/components/search-form";
 import {
-  Brain, Calendar, MapPin, LocateFixed, GitCompare,
-  Mic, PlusCircle, Map, MessageSquare, Search,
-  ArrowRight, CheckCircle, Stethoscope, Globe2, Thermometer,
-  Navigation, Star, Pill, ClipboardList, ScanLine,
+  Brain, Calendar, PlusCircle, MessageSquare, Search,
+  ArrowRight, Thermometer, Navigation, Pill, ClipboardList, ScanLine,
+  Stethoscope, GitCompare, MapPin,
 } from "lucide-react";
 
-const features = [
-  {
-    icon: Thermometer,
-    title: "I Feel Sick Right Now",
-    description:
-      "Describe your symptoms. AI asks 2–3 questions, then tells you exactly what to do — rest at home, see a doctor today, or go to the ER.",
-    href: "/symptom-check",
-    cta: "Start symptom check",
-    color: "red",
-    badge: "Start here",
-  },
-  {
-    icon: Search,
-    title: "Find a Doctor",
-    description:
-      "Search thousands of doctors worldwide by city, specialty, and language. Real-time results from OpenStreetMap.",
-    href: "/search",
-    cta: "Search now",
-    color: "blue",
-    badge: null,
-  },
-  {
-    icon: Brain,
-    title: "AI Recommendation",
-    description:
-      "Describe your symptoms, travel context, allergies, and conditions. AI ranks the best doctors for your exact situation.",
-    href: "/recommend",
-    cta: "Get recommendation",
-    color: "purple",
-    badge: "Popular",
-  },
-  {
-    icon: MessageSquare,
-    title: "AI Conversation",
-    description:
-      "Chat or speak with your AI medical assistant. Type or use your voice — works in any language, hands-free.",
-    href: "/conversation",
-    cta: "Start conversation",
-    color: "green",
-    badge: "New",
-  },
-  {
-    icon: Map,
-    title: "Map View",
-    description:
-      "See all nearby doctors on an interactive map. Click any pin to view their address, phone, and profile.",
-    href: "/search",
-    cta: "Open map",
-    color: "orange",
-    badge: null,
-  },
-  {
-    icon: Navigation,
-    title: "Best Doctor Near Me",
-    description:
-      "Allow location access — AI instantly finds the closest doctors sorted by distance, with ratings and one-tap booking.",
-    href: "/near-me",
-    cta: "Find near me",
-    color: "teal",
-    badge: "Auto-book",
-  },
-  {
-    icon: Star,
-    title: "Ratings & Reviews",
-    description:
-      "Real patient ratings on every doctor. Leave a review after your appointment and help other travelers find great care.",
-    href: "/search",
-    cta: "Browse rated doctors",
-    color: "yellow",
-    badge: null,
-  },
-  {
-    icon: Pill,
-    title: "Medication Finder",
-    description:
-      "Taking Metformin? Heading to Japan? Find the local brand name, get a pharmacy phrase in Japanese, and know if you need a prescription.",
-    href: "/medication",
-    cta: "Find my medication",
-    color: "purple",
-    badge: "New",
-  },
-  {
-    icon: GitCompare,
-    title: "Doctor Comparison",
-    description:
-      "Select 2–3 doctors from your results and let AI compare them side-by-side for your specific medical need.",
-    href: "/recommend",
-    cta: "Compare doctors",
-    color: "indigo",
-    badge: null,
-  },
-  {
-    icon: Mic,
-    title: "Voice Agent",
-    description:
-      "Press the bot button on any page to start a voice conversation. AI guides you to the right care in your language.",
-    href: "/conversation",
-    cta: "Try voice",
-    color: "rose",
-    badge: null,
-  },
-  {
-    icon: Calendar,
-    title: "My Appointments",
-    description:
-      "Book and manage your doctor appointments. Track pending, confirmed, and completed visits all in one place.",
-    href: "/appointments",
-    cta: "View appointments",
-    color: "pink",
-    badge: null,
-  },
-  {
-    icon: ClipboardList,
-    title: "Medical Report Reader",
-    description:
-      "Upload any blood test, X-ray, ECG, or prescription. AI reads it and explains every result in simple language — Hindi supported.",
-    href: "/report-analysis",
-    cta: "Read my report",
-    color: "sky",
-    badge: "New",
-  },
-  {
-    icon: ScanLine,
-    title: "Medicine Scanner",
-    description:
-      "Photo any medicine packet or strip. AI identifies it and tells you uses, dosage, side effects, precautions, and storage — in Hindi too.",
-    href: "/medicine-analysis",
-    cta: "Scan a medicine",
-    color: "emerald",
-    badge: "New",
-  },
-  {
-    icon: PlusCircle,
-    title: "Suggest a Doctor",
-    description:
-      "Know a great doctor not in our system? Submit their details and help other travelers find better care.",
-    href: "/suggest",
-    cta: "Suggest a doctor",
-    color: "yellow",
-    badge: null,
-  },
-];
-
-const colorMap: Record<string, { bg: string; icon: string; badge: string; border: string }> = {
-  red:    { bg: "bg-red-50",    icon: "text-red-600 bg-red-100",    badge: "bg-red-600 text-white",        border: "hover:border-red-300" },
-  blue:   { bg: "bg-blue-50",   icon: "text-blue-600 bg-blue-100",   badge: "bg-blue-100 text-blue-600",   border: "hover:border-blue-200" },
-  purple: { bg: "bg-purple-50", icon: "text-purple-600 bg-purple-100", badge: "bg-purple-100 text-purple-600", border: "hover:border-purple-200" },
-  green:  { bg: "bg-green-50",  icon: "text-green-600 bg-green-100",  badge: "bg-green-100 text-green-600",  border: "hover:border-green-200" },
-  orange: { bg: "bg-orange-50", icon: "text-orange-600 bg-orange-100", badge: "bg-orange-100 text-orange-600", border: "hover:border-orange-200" },
-  teal:   { bg: "bg-teal-50",   icon: "text-teal-600 bg-teal-100",   badge: "bg-teal-100 text-teal-600",   border: "hover:border-teal-200" },
-  indigo: { bg: "bg-indigo-50", icon: "text-indigo-600 bg-indigo-100", badge: "bg-indigo-100 text-indigo-600", border: "hover:border-indigo-200" },
-  rose:   { bg: "bg-rose-50",   icon: "text-rose-600 bg-rose-100",   badge: "bg-rose-100 text-rose-600",   border: "hover:border-rose-200" },
-  pink:   { bg: "bg-pink-50",   icon: "text-pink-600 bg-pink-100",   badge: "bg-pink-100 text-pink-600",   border: "hover:border-pink-200" },
-  yellow:  { bg: "bg-yellow-50",  icon: "text-yellow-600 bg-yellow-100",  badge: "bg-yellow-100 text-yellow-600",  border: "hover:border-yellow-200"  },
-  sky:     { bg: "bg-sky-50",     icon: "text-sky-600 bg-sky-100",        badge: "bg-sky-600 text-white",         border: "hover:border-sky-200"     },
-  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600 bg-emerald-100", badge: "bg-emerald-600 text-white",   border: "hover:border-emerald-200" },
-};
-
-const stats = [
-  { value: "50+", label: "Countries" },
-  { value: "10,000+", label: "Doctors" },
-  { value: "100+", label: "Languages" },
-  { value: "AI", label: "Powered" },
-];
-
-const howItWorks = [
-  {
-    step: "01",
-    icon: MapPin,
-    title: "Enter your city",
-    description: "Type your city or tap 'Use my location' to auto-detect where you are.",
-  },
-  {
-    step: "02",
-    icon: Brain,
-    title: "Let AI find your match",
-    description: "Describe your symptoms and the AI ranks the best doctors for your exact situation.",
-  },
-  {
-    step: "03",
-    icon: Calendar,
-    title: "Book your appointment",
-    description: "View doctor profiles, contact them directly, and save your appointment in the app.",
-  },
+const quickActions = [
+  { icon: Navigation,    label: "Near Me",      sub: "Closest doctors",    href: "/near-me",          bg: "bg-teal-50",    iconBg: "bg-teal-100",    iconColor: "text-teal-600"    },
+  { icon: Search,        label: "Find Doctor",  sub: "Search worldwide",   href: "/search",           bg: "bg-blue-50",    iconBg: "bg-blue-100",    iconColor: "text-blue-600"    },
+  { icon: Pill,          label: "Medication",   sub: "Find drugs abroad",  href: "/medication",       bg: "bg-violet-50",  iconBg: "bg-violet-100",  iconColor: "text-violet-600"  },
+  { icon: Brain,         label: "AI Recommend", sub: "Best match for you", href: "/recommend",        bg: "bg-purple-50",  iconBg: "bg-purple-100",  iconColor: "text-purple-600"  },
+  { icon: MessageSquare, label: "AI Chat",      sub: "Talk to AI doctor",  href: "/conversation",     bg: "bg-green-50",   iconBg: "bg-green-100",   iconColor: "text-green-600"   },
+  { icon: Calendar,      label: "Appointments", sub: "Book & manage",      href: "/appointments",     bg: "bg-pink-50",    iconBg: "bg-pink-100",    iconColor: "text-pink-600"    },
+  { icon: GitCompare,    label: "Compare",      sub: "AI side-by-side",    href: "/recommend",        bg: "bg-indigo-50",  iconBg: "bg-indigo-100",  iconColor: "text-indigo-600"  },
+  { icon: PlusCircle,    label: "Suggest",      sub: "Add a doctor",       href: "/suggest",          bg: "bg-orange-50",  iconBg: "bg-orange-100",  iconColor: "text-orange-600"  },
 ];
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen">
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-brand-900 via-brand-700 to-brand-500 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              Trusted by travelers in 50+ countries
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 text-balance">
-              Find the Best Doctor{" "}
-              <span className="text-blue-200">in Any City</span>
-            </h1>
-            <p className="text-lg md:text-xl text-blue-100 max-w-2xl mx-auto text-balance">
-              AI-powered doctor search for travelers and new residents. Filter by
-              language, specialty, and location — get a personalized match in seconds.
-            </p>
+    <div className="min-h-screen bg-gray-50">
 
-            {/* I Feel Sick CTA */}
-            <div className="mt-8 mb-2">
-              <Link
-                href="/symptom-check"
-                className="inline-flex items-center gap-3 bg-red-500 hover:bg-red-600 text-white font-bold px-7 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all text-base"
-              >
-                <Thermometer className="w-5 h-5" />
-                I feel sick right now
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <p className="text-blue-200 text-xs mt-2">Describe your symptoms — AI tells you what to do in 30 seconds</p>
+      {/* ── HERO ── */}
+      <section className="bg-gradient-to-b from-brand-900 via-brand-700 to-brand-600 text-white">
+        <div className="max-w-2xl mx-auto px-4 pt-8 pb-16">
+
+          {/* Brand */}
+          <div className="flex items-center gap-2.5 mb-7">
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+              <Stethoscope className="w-5 h-5" />
             </div>
+            <span className="font-bold text-xl">TravelDoc AI</span>
+            <span className="ml-auto text-xs bg-white/20 px-2.5 py-1 rounded-full font-medium flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              50+ countries
+            </span>
           </div>
 
-          <div className="max-w-3xl mx-auto">
+          {/* Headline */}
+          <h1 className="text-2xl sm:text-3xl font-bold leading-snug mb-2">
+            Find doctors, read reports<br className="sm:hidden" />{" "}
+            &amp; scan medicines — anywhere
+          </h1>
+          <p className="text-blue-200 text-sm mb-7">
+            AI health assistant for travelers · Any language · Free
+          </p>
+
+          {/* Emergency CTA */}
+          <Link
+            href="/symptom-check"
+            className="flex items-center gap-3 w-full bg-red-500 hover:bg-red-600 active:scale-95 text-white font-bold py-4 px-5 rounded-2xl text-base shadow-lg transition-all"
+          >
+            <Thermometer className="w-5 h-5 flex-shrink-0" />
+            <span className="flex-1">I Feel Sick Right Now</span>
+            <ArrowRight className="w-4 h-4 flex-shrink-0" />
+          </Link>
+          <p className="text-center text-blue-200 text-xs mt-2">
+            AI tells you exactly what to do in 30 seconds
+          </p>
+        </div>
+      </section>
+
+      {/* ── MAIN CONTENT ── */}
+      <div className="max-w-2xl mx-auto px-4">
+
+        {/* Search card — floated up */}
+        <div className="-mt-7 mb-6">
+          <div className="bg-white rounded-2xl shadow-lg p-4 border border-gray-100">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" /> Find a doctor by city
+            </p>
             <SearchForm />
           </div>
+        </div>
 
-          <div className="flex flex-wrap justify-center gap-6 sm:gap-8 mt-8 sm:mt-12">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-3xl font-bold text-white">{s.value}</div>
-                <div className="text-sm text-blue-200 mt-0.5">{s.label}</div>
+        {/* ── NEW: AI Health Tools ── */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-sm font-bold text-gray-900">AI Health Tools</h2>
+            <span className="text-xs font-bold bg-brand-600 text-white px-2 py-0.5 rounded-full">New</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+
+            {/* Report Reader */}
+            <Link
+              href="/report-analysis"
+              className="relative flex flex-col p-4 bg-sky-50 border border-sky-100 rounded-2xl active:scale-95 transition-all hover:shadow-md"
+            >
+              <span className="absolute top-3 right-3 text-xs font-bold bg-sky-600 text-white px-1.5 py-0.5 rounded-full">
+                New
+              </span>
+              <div className="w-11 h-11 rounded-xl bg-sky-100 flex items-center justify-center mb-3">
+                <ClipboardList className="w-5 h-5 text-sky-600" />
               </div>
-            ))}
+              <p className="text-sm font-bold text-gray-900 mb-1.5 pr-8 leading-tight">
+                Read My Report
+              </p>
+              <p className="text-xs text-gray-500 leading-relaxed flex-1">
+                Blood test, X-ray, ECG, prescription — AI explains in simple words. Hindi भी।
+              </p>
+              <div className="flex items-center gap-1 mt-3 text-xs font-semibold text-sky-600">
+                Upload now <ArrowRight className="w-3 h-3" />
+              </div>
+            </Link>
+
+            {/* Medicine Scanner */}
+            <Link
+              href="/medicine-analysis"
+              className="relative flex flex-col p-4 bg-emerald-50 border border-emerald-100 rounded-2xl active:scale-95 transition-all hover:shadow-md"
+            >
+              <span className="absolute top-3 right-3 text-xs font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full">
+                New
+              </span>
+              <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center mb-3">
+                <ScanLine className="w-5 h-5 text-emerald-600" />
+              </div>
+              <p className="text-sm font-bold text-gray-900 mb-1.5 pr-8 leading-tight">
+                Scan Medicine
+              </p>
+              <p className="text-xs text-gray-500 leading-relaxed flex-1">
+                Photo any medicine — uses, dosage, side effects, warnings. Hindi भी।
+              </p>
+              <div className="flex items-center gap-1 mt-3 text-xs font-semibold text-emerald-600">
+                Scan now <ArrowRight className="w-3 h-3" />
+              </div>
+            </Link>
+
           </div>
         </div>
-      </section>
 
-      {/* How it works */}
-      <section className="py-16 bg-gray-50 border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-gray-900">How it works</h2>
-            <p className="text-gray-500 text-sm mt-2">Find a doctor in 3 simple steps</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {howItWorks.map((step, i) => (
-              <div key={step.step} className="flex flex-col items-center text-center relative">
-                {i < howItWorks.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-gray-200 z-0" />
-                )}
-                <div className="relative z-10 w-16 h-16 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-4">
-                  <step.icon className="w-7 h-7 text-brand-600" />
-                  <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center">
-                    {i + 1}
-                  </span>
+        {/* ── Quick Access ── */}
+        <div className="mb-6">
+          <h2 className="text-sm font-bold text-gray-900 mb-3">Quick Access</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {quickActions.map((a) => (
+              <Link
+                key={a.label}
+                href={a.href}
+                className={`flex items-center gap-3 px-3.5 py-3.5 rounded-2xl ${a.bg} active:scale-95 transition-all hover:shadow-sm`}
+              >
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${a.iconBg}`}>
+                  <a.icon className={`w-4 h-4 ${a.iconColor}`} />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1">{step.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{step.description}</p>
-              </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 leading-tight">{a.label}</p>
+                  <p className="text-xs text-gray-400 leading-tight mt-0.5 hidden sm:block">{a.sub}</p>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
-      </section>
 
-      {/* Features grid */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-brand-50 border border-brand-100 text-brand-600 text-xs font-semibold px-3 py-1 rounded-full mb-4">
-              <Stethoscope className="w-3.5 h-3.5" />
-              Everything in one place
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
-              All features — scroll & click to use
-            </h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
-              Every tool you need to find the right doctor, from AI recommendations
-              to voice conversations — all free, all here.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((f) => {
-              const c = colorMap[f.color];
-              return (
-                <Link
-                  key={f.title}
-                  href={f.href}
-                  className={`group relative flex flex-col p-6 rounded-2xl bg-white border border-gray-100 ${c.border} hover:shadow-md transition-all duration-200`}
-                >
-                  {/* Badge */}
-                  {f.badge && (
-                    <span className={`absolute top-4 right-4 text-xs font-semibold px-2 py-0.5 rounded-full ${c.badge}`}>
-                      {f.badge}
-                    </span>
-                  )}
-
-                  {/* Icon */}
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${c.icon}`}>
-                    <f.icon className="w-5 h-5" />
-                  </div>
-
-                  {/* Content */}
-                  <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed flex-1">{f.description}</p>
-
-                  {/* CTA */}
-                  <div className="flex items-center gap-1.5 mt-4 text-sm font-semibold text-brand-600 group-hover:gap-2.5 transition-all">
-                    {f.cta}
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+        {/* ── Footer ── */}
+        <div className="border-t border-gray-100 py-6 text-center space-y-1">
+          <p className="text-xs text-gray-400">© 2026 TravelDoc AI · Built for travelers worldwide</p>
+          <p className="text-xs text-gray-400">Not a substitute for professional medical advice</p>
         </div>
-      </section>
 
-      {/* Why TravelDoc */}
-      <section className="py-16 bg-gray-50 border-t border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Built for travelers, expats & anyone abroad
-              </h2>
-              <div className="space-y-3">
-                {[
-                  "Works in 100+ languages — voice and text",
-                  "Finds doctors in any city worldwide, instantly",
-                  "AI detects emergencies and guides you to the ER",
-                  "Free to use — no subscription, no billing",
-                  "Doctor comparison and smart questions to ask",
-                  "Appointment tracking in one place",
-                ].map((point) => (
-                  <div key={point} className="flex items-start gap-2.5 text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                    {point}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-3">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Quick access</p>
-              {[
-                { label: "I feel sick right now", href: "/symptom-check", icon: Thermometer, red: true },
-                { label: "Best doctor near me", href: "/near-me", icon: Navigation, red: false },
-                { label: "Read my medical report", href: "/report-analysis", icon: ClipboardList, red: false },
-                { label: "Scan a medicine", href: "/medicine-analysis", icon: ScanLine, red: false },
-                { label: "Find my medication abroad", href: "/medication", icon: Pill, red: false },
-                { label: "AI doctor recommendation", href: "/recommend", icon: Brain, red: false },
-                { label: "Chat or speak with AI", href: "/conversation", icon: MessageSquare, red: false },
-                { label: "My appointments", href: "/appointments", icon: Calendar, red: false },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors group ${item.red ? "border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300" : "border-gray-100 hover:border-brand-200 hover:bg-brand-50"}`}
-                >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${item.red ? "bg-red-100 group-hover:bg-red-200" : "bg-brand-50 group-hover:bg-brand-100"}`}>
-                    <item.icon className={`w-4 h-4 ${item.red ? "text-red-600" : "text-brand-600"}`} />
-                  </div>
-                  <span className={`text-sm font-medium ${item.red ? "text-red-700 font-semibold" : "text-gray-700"}`}>{item.label}</span>
-                  <ArrowRight className={`w-3.5 h-3.5 ml-auto transition-colors ${item.red ? "text-red-300 group-hover:text-red-500" : "text-gray-300 group-hover:text-brand-400"}`} />
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16 bg-brand-600">
-        <div className="max-w-3xl mx-auto px-4 text-center">
-          <Globe2 className="w-10 h-10 text-blue-200 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-3">
-            Ready to find your doctor?
-          </h2>
-          <p className="text-blue-100 mb-8">
-            Search for free, in any city, right now. No account needed to start.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/symptom-check"
-              className="inline-flex items-center justify-center gap-2 bg-red-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-red-600 transition-colors"
-            >
-              <Thermometer className="w-4 h-4" />
-              I Feel Sick Right Now
-            </Link>
-            <Link
-              href="/search"
-              className="inline-flex items-center justify-center gap-2 bg-white text-brand-700 font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors"
-            >
-              <Search className="w-4 h-4" />
-              Find a Doctor
-            </Link>
-            <Link
-              href="/recommend"
-              className="inline-flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold px-6 py-3 rounded-xl hover:bg-brand-800 transition-colors border border-blue-400"
-            >
-              <Brain className="w-4 h-4" />
-              AI Recommendation
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-gray-400">© 2026 TravelDoc AI. Built for travelers worldwide.</p>
-          <p className="text-xs text-gray-400">Not a substitute for professional medical advice.</p>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }
